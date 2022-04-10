@@ -96,14 +96,14 @@ X_train, X_val, X_test = embedding_creator.train(load_model = True)
 #### Vanilla NN
 keras_embedding_layers = embedding_creator.get_embedding_layer(mean_embedding=True)
 model = Vanilla_NN("kerasEmbed", keras_embedding_layers)
-model.train(X_train, y_train, X_val, y_val, load_model=True)
+model.train(X_train, y_train, X_val, y_val, load_model=False)
 y_pred = model.predict(X_test)
 evaluate("vanilla_nn_kerasEmbed", y_pred, y_test, save_results=False)
 
 #### Conv 1D
 fasttext_embedding_layers = embedding_creator.get_embedding_layer(mean_embedding=False)
 model = Conv1D_model("kerasEmbed", keras_embedding_layers)
-model.train(X_train, y_train, X_val, y_val, load_model=True)
+model.train(X_train, y_train, X_val, y_val, load_model=False)
 y_pred = model.predict(X_test)
 evaluate("conv1d_keras_embed", y_pred, y_test, save_results=True)
 
