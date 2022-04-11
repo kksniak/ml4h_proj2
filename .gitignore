@@ -1,2 +1,5 @@
 .mypy_cache/
 data/
+__pycache__/
+embeddings_checkpoints/
+models_checkpoints/
