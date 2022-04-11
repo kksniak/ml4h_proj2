@@ -185,3 +185,18 @@ class Embeddings:
                     Lambda(lambda x: backend.mean(x, axis=1)))
 
         return embedding_layers
+
+
+if __name__ == '__main__':
+    from preprocessing import Preprocessing
+
+    dataset_preprocessing = Preprocessing(stemming=False, lemmatisation=False)
+    dataset_preprocessing.preprocess_datasets()
+    sentences_train, sentences_val, sentences_test, y_train, y_val, y_test = dataset_preprocessing.get_X_and_encoded_Y(
+    )
+
+    embedding_creator = Embeddings("TF-IDF", sentences_train, sentences_val,
+                                   sentences_test)
+    X_train, X_val, X_test = embedding_creator.train()
+
+    print(X_train.shape)

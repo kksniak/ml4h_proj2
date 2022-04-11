@@ -25,7 +25,7 @@ class Preprocessing:
 
     def preprocess_datasets(
             self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        print(self.test_df)
+        # print(self.test_df)
 
         self.lowercasing()
         self.replace_digits()
@@ -37,7 +37,7 @@ class Preprocessing:
             self.apply_lemmatisation()
 
         #self.tokenisation()
-        print(self.test_df)
+        # print(self.test_df)
         return self.train_df, self.val_df, self.test_df
 
     def get_X_and_encoded_Y(
@@ -128,3 +128,12 @@ class Preprocessing:
             lambda text: token(text))
         self.test_df["text"] = self.test_df["text"].apply(
             lambda text: token(text))
+
+
+if __name__ == '__main__':
+    dataset_preprocessing = Preprocessing(stemming=False, lemmatisation=False)
+    dataset_preprocessing.preprocess_datasets()
+    sentences_train, sentences_val, sentences_test, y_train, y_val, y_test = dataset_preprocessing.get_X_and_encoded_Y(
+    )
+
+    print(sentences_train[0])
