@@ -60,7 +60,12 @@ def evaluate_multiclass(y_true: np.ndarray, y_pred: np.ndarray):
 def get_heatmap(data):
     fig, ax = plt.subplots(facecolor="white")
 
-    cm_heatmap = sn.heatmap(data, annot=True, annot_kws={"size": 15}, fmt="g", cmap="Greens", ax=ax)
+    cm_heatmap = sn.heatmap(data,
+                            annot=True,
+                            annot_kws={"size": 15},
+                            fmt="g",
+                            cmap="Greens",
+                            ax=ax)
     cm_heatmap.set(
         xlabel="Predicted class",
         ylabel="True class",
