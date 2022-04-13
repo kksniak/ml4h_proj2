@@ -38,7 +38,6 @@ class BiRNN_LSTM_POS:
         outputs = Dense(5, activation="softmax")(x)
 
 
-
         self.clf = keras.Model(inputs= [inputs,pos_input], outputs = outputs)
         self.clf.summary()
 

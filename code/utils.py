@@ -6,6 +6,10 @@ import pandas as pd
 
 import numpy as np
 import tensorflow as tf
+import spacy
+from tqdm import tqdm
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pathlib
 
 SEED = 2137
 
@@ -51,3 +55,21 @@ def set_seeds() -> None:
     tf.keras.initializers.glorot_normal(SEED)
     np.random.seed(SEED)
     random.seed(SEED)
+
+
+def create_POS_encoding(sentences:list, filename:str, vectorizer:TfidfVectorizer = None) -> TfidfVectorizer:
+    nlp = spacy.load("en_core_web_sm")
+    pos = []
+    for  sentence in tqdm(sentences):
+        doc = nlp(sentence)
+        pos.append(" ".join([w.pos_ for w in doc]))
+
+    if vectorizer is None:
+        vectorizer = TfidfVectorizer()
+        X_tf = vectorizer.fit_transform(pos).toarray()
+
+    else:
+        X_tf = vectorizer.transform(pos).toarray()
+
+    np.save(pathlib.Path(__file__).parents[1].joinpath(f"data/{filename}.npy"),X_tf)
+    return vectorizer
