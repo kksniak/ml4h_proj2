@@ -66,7 +66,7 @@ class BiRNN_LSTM_POS:
                      callbacks=[callback])
 
         print("Saving model...")
-        self.clf.save("code/models/models_checkpoints/biRNN_" +
+        self.clf.save("code/models/models_checkpoints/biRNN_POS_" +
                       self.embedding_type)
 
     def predict(self, X_test:np.array, pos_test:np.array):
