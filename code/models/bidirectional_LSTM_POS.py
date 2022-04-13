@@ -12,7 +12,7 @@ sys.path.append("../")
 from utils import set_seeds
 
 
-class BiRNN_LSTM:
+class BiRNN_LSTM_POS:
 
     def __init__(self,
                  embedding_type: Literal["word2vec", "fastText", "kerasEmbed"],
@@ -20,23 +20,30 @@ class BiRNN_LSTM:
         self.embedding_type = embedding_type
         self.embedding_layers = embedding_layers
 
-    def init_model(self, input_shape: Tuple):
-        inputs = keras.Input(shape=input_shape)
+    def init_model(self, input_shape: Tuple, pos_shape: Tuple):
+        inputs = keras.Input(shape=input_shape, name="sentences")
         x = inputs
-
+        pos_input = keras.Input(shape = pos_shape, name="pos")
         for layer in self.embedding_layers:
             x = layer(x)
 
+        
         x = Bidirectional(LSTM(32, return_sequences=True))(x)
         x = Bidirectional(LSTM(32))(x)
-        x = Dense(20, activation="relu")(x)
+
+        pos_x = Dense(30,activation="relu")(pos_input)
+        concatted = keras.layers.Concatenate()([x,pos_x])
+
+        x = Dense(20, activation="relu")(concatted)
         outputs = Dense(5, activation="softmax")(x)
 
-        self.clf = keras.Model(inputs, outputs)
+
+
+        self.clf = keras.Model(inputs= [inputs,pos_input], outputs = outputs)
         self.clf.summary()
 
     def train(self, X_train: np.array, y_train: np.array, X_val: np.array,
-              y_val: np.array, load_model: boolean):
+              y_val: np.array, pos_train:np.array, pos_val:np.array, load_model: boolean):
 
         if load_model:
             print("Loading model...")
@@ -46,23 +53,23 @@ class BiRNN_LSTM:
 
         print("Fitting model...")
         set_seeds()
-        self.init_model(input_shape=(X_train.shape[-1]))
+        self.init_model(input_shape=(X_train.shape[-1],), pos_shape=(pos_train.shape[-1],))
 
         callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
         self.clf.compile("adam",
                          "sparse_categorical_crossentropy",
                          metrics=["accuracy"])
-        self.clf.fit(X_train,
+        self.clf.fit({"sentences": X_train,"pos":pos_train},
                      y_train,
                      batch_size=512,
                      epochs=10,
-                     validation_data=(X_val, y_val),
+                     validation_data=([X_val, pos_val], y_val),
                      callbacks=[callback])
 
         print("Saving model...")
         self.clf.save("code/models/models_checkpoints/biRNN_" +
                       self.embedding_type)
 
-    def predict(self, X_test):
+    def predict(self, X_test:np.array, pos_test:np.array):
         print("Making predictions...")
-        return self.clf.predict(X_test)
+        return self.clf.predict({"sentences": X_test,"pos":pos_test})
