@@ -14,7 +14,7 @@ from models.bidirectional_LSTM import BiRNN_LSTM
 ### Loading and Preprocessing Datasets
 dataset_preprocessing = Preprocessing(stemming=False, lemmatisation=False)
 dataset_preprocessing.preprocess_datasets()
-sentences_train, sentences_val, sentences_test, y_train, y_val, y_test = dataset_preprocessing.get_X_and_encoded_Y(
+sentences_train, sentences_val, sentences_test, y_train, y_val, y_test, abstractPosFeat_train, abstractPosFeat_val, abstractPosFeat_test = dataset_preprocessing.get_X_and_encoded_Y(
 )
 
 ### Create TF-IDF Embedding
@@ -29,7 +29,6 @@ model = Vanilla_NN("TF-IDF")
 model.train(X_train, y_train, X_val, y_val, load_model=True)
 y_pred = model.predict(X_test)
 evaluate("vanilla_nn_tf_idf", y_pred, y_test, save_results=True)
-
 
 #############
 #############

@@ -41,7 +41,7 @@ class Preprocessing:
 
     def get_X_and_encoded_Y(
         self
-    ) -> Tuple[np.array, np.array, np.array, np.array, np.array, np.array]:
+    ) -> Tuple[np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array]:
         name_mapping = {'BACKGROUND': 0, 'OBJECTIVE': 1, 'METHODS': 2, 'RESULTS': 3, 'CONCLUSIONS': 4}
 
         sentences_train = self.train_df["text"].tolist()
@@ -52,7 +52,11 @@ class Preprocessing:
         y_val = np.array([name_mapping[label] for label in self.val_df["target"].to_numpy()])
         y_test = np.array([name_mapping[label] for label in self.test_df["target"].to_numpy()])
 
-        return sentences_train, sentences_val, sentences_test, y_train, y_val, y_test
+        abstractPosFeat_train = np.array(self.train_df["relative_position"].tolist())
+        abstractPosFeat_val = np.array(self.val_df["relative_position"].tolist())
+        abstractPosFeat_test = np.array(self.test_df["relative_position"].tolist())
+
+        return sentences_train, sentences_val, sentences_test, y_train, y_val, y_test, abstractPosFeat_train, abstractPosFeat_val, abstractPosFeat_test
 
     def lowercasing(self) -> None:
         self.train_df["text"] = self.train_df["text"].str.lower()
@@ -131,7 +135,6 @@ class Preprocessing:
 if __name__ == '__main__':
     dataset_preprocessing = Preprocessing(stemming=False, lemmatisation=False)
     dataset_preprocessing.preprocess_datasets()
-    sentences_train, sentences_val, sentences_test, y_train, y_val, y_test = dataset_preprocessing.get_X_and_encoded_Y(
-    )
+    sentences_train, sentences_val, sentences_test, y_train, y_val, y_test,abstractPosFeat_train, abstractPosFeat_val, abstractPosFeat_test = dataset_preprocessing.get_X_and_encoded_Y()
 
-    print(sentences_train[0])
+    print(sentences_train[0], y_train[0], abstractPosFeat_train[0])
