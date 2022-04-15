@@ -28,8 +28,8 @@ class Preprocessing:
         # print(self.test_df)
 
         self.lowercasing()
-        self.replace_digits()
         self.stop_words_punctuation_removal()
+        self.replace_digits()
 
         if self.if_stemming:
             self.apply_stemming()
