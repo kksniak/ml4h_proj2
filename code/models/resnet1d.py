@@ -3,7 +3,7 @@ from xmlrpc.client import boolean
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.layers import Dense, Bidirectional, LSTM
+from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten,MaxPooling1D
 
 import sys
 
@@ -12,7 +12,7 @@ sys.path.append("../")
 from utils import set_seeds
 
 
-class BiRNN_LSTM_POS:
+class ResNet1D_model:
 
     def __init__(self,
                  embedding_type: Literal["word2vec", "fastText", "kerasEmbed"],
@@ -20,54 +20,64 @@ class BiRNN_LSTM_POS:
         self.embedding_type = embedding_type
         self.embedding_layers = embedding_layers
 
-    def init_model(self, input_shape: Tuple, pos_shape: Tuple):
-        inputs = keras.Input(shape=input_shape, name="sentences")
+    def init_model(self, input_shape: Tuple):
+        inputs = keras.Input(shape=input_shape)
         x = inputs
-        pos_input = keras.Input(shape = pos_shape, name="pos")
+
         for layer in self.embedding_layers:
             x = layer(x)
 
-        
-        x = Bidirectional(LSTM(32, return_sequences=True))(x)
-        x = Bidirectional(LSTM(32))(x)
+        x = Conv1D(10, 12, activation="relu")(x)
+       
+        x = Conv1D(10, 9, activation="relu")(x)
+        x = Conv1D(20, 9, activation="relu")(x) 
+        block1_out = MaxPooling1D(2,2)(x)
 
-        pos_x = Dense(30,activation="relu")(pos_input)
-        concatted = keras.layers.Concatenate()([x,pos_x])
+        x = Conv1D(20, 9, activation="relu",padding="same")(block1_out)
+        x = Conv1D(30, 9, activation="relu",padding="same")(x)
 
-        x = Dense(20, activation="relu")(concatted)
+        resized_block1_out = Conv1D(30,1, activation="relu")(block1_out)
+        block2_out = keras.layers.add([x,resized_block1_out])
+
+        x = Conv1D(30, 9, activation="relu",padding="same")(block2_out)
+        x = Conv1D(30, 9, activation="relu",padding="same")(x)
+
+        block3_out = keras.layers.add([x,block2_out])
+
+        x = Flatten()(block3_out)
         outputs = Dense(5, activation="softmax")(x)
 
-        self.clf = keras.Model(inputs = [inputs,pos_input], outputs = outputs)
+        self.clf = keras.Model(inputs, outputs)
         self.clf.summary()
 
     def train(self, X_train: np.array, y_train: np.array, X_val: np.array,
-              y_val: np.array, pos_train:np.array, pos_val:np.array, load_model: boolean):
+              y_val: np.array, load_model: boolean):
 
         if load_model:
             print("Loading model...")
             self.clf = keras.models.load_model(
-                "code/models/models_checkpoints/biRNN_POS_" + self.embedding_type)
+                "code/models/models_checkpoints/ResNet_1D_" + self.embedding_type)
             return
 
         print("Fitting model...")
         set_seeds()
-        self.init_model(input_shape=(X_train.shape[-1],), pos_shape=(pos_train.shape[-1],))
+        self.init_model(input_shape=(X_train.shape[-1]))
 
         callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
         self.clf.compile("adam",
                          "sparse_categorical_crossentropy",
                          metrics=["accuracy"])
-        self.clf.fit({"sentences": X_train,"pos":pos_train},
+        self.clf.fit(X_train,
                      y_train,
                      batch_size=512,
                      epochs=10,
-                     validation_data=([X_val, pos_val], y_val),
+                     validation_data=(X_val, y_val),
                      callbacks=[callback])
 
         print("Saving model...")
-        self.clf.save("code/models/models_checkpoints/biRNN_POS_" +
+        self.clf.save("code/models/models_checkpoints/ResNet_1D_" +
                       self.embedding_type)
 
-    def predict(self, X_test:np.array, pos_test:np.array):
+    def predict(self, X_test):
         print("Making predictions...")
-        return self.clf.predict({"sentences": X_test,"pos":pos_test})
+        return self.clf.predict(X_test)
