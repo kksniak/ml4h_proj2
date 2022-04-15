@@ -48,7 +48,7 @@ class Embeddings:
     def tf_idf(self) -> None:
         set_seeds()
         print('Training TF-IDF Embedding...')
-        vectorizer = TfidfVectorizer(max_features=500)
+        vectorizer = TfidfVectorizer(max_features=1000)
         self.X_train = vectorizer.fit_transform(self.sentences_train).toarray()
         self.X_val = vectorizer.transform(self.sentences_val).toarray()
         self.X_test = vectorizer.transform(self.sentences_test).toarray()
