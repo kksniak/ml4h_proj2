@@ -9,6 +9,8 @@ import tensorflow as tf
 import spacy
 from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_classif
+
 import pathlib
 
 SEED = 2137
@@ -70,6 +72,16 @@ def set_seeds() -> None:
     tf.keras.initializers.glorot_normal(SEED)
     np.random.seed(SEED)
     random.seed(SEED)
+
+def fast_feature_selector(n_feats: int , X_train: np.array, y_train: np.array, X_test: np.array) -> Tuple[np.array, np.array]:
+    selector_1 = VarianceThreshold()
+    X_train = selector_1.fit_transform(X_train, y_train)
+    X_test = selector_1.transform(X_test)
+    selector_2 = SelectKBest(f_classif, k = n_feats)
+    X_train = selector_2.fit_transform(X_train, y_train)
+    X_test = selector_2.transform(X_test)
+
+    return X_train, X_test
 
 
 def create_POS_encoding(sentences:list, filename:str, vectorizer:TfidfVectorizer = None) -> TfidfVectorizer:

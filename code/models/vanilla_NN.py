@@ -39,12 +39,12 @@ class Vanilla_NN:
         self.clf.summary()
 
     def train(self, X_train: np.array, y_train: np.array, X_val: np.array,
-              y_val: np.array, load_model: boolean):
+              y_val: np.array, load_model: boolean, save_name: str = ''):
 
         if load_model:
             print("Loading model...")
             self.clf = keras.models.load_model(
-                "code/models/models_checkpoints/vanila_NN_" +
+                "code/models/models_checkpoints/vanila_NN_" + save_name +
                 self.embedding_type)
             return
 
@@ -59,12 +59,12 @@ class Vanilla_NN:
         self.clf.fit(X_train,
                      y_train,
                      batch_size=512,
-                     epochs=20,
+                     epochs=50,
                      validation_data=(X_val, y_val),
                      callbacks=[callback])
 
         print("Saving model...")
-        self.clf.save("code/models/models_checkpoints/vanila_NN_" +
+        self.clf.save("code/models/models_checkpoints/vanila_NN_" + save_name +
                       self.embedding_type)
 
     def predict(self, X_test):
