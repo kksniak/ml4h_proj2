@@ -2,7 +2,6 @@ from xmlrpc.client import boolean
 from typing import Tuple
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
 import re
 import string
 import nltk
@@ -43,16 +42,15 @@ class Preprocessing:
     def get_X_and_encoded_Y(
         self
     ) -> Tuple[np.array, np.array, np.array, np.array, np.array, np.array]:
-        label_encoder = LabelEncoder()
+        name_mapping = {'BACKGROUND': 0, 'OBJECTIVE': 1, 'METHODS': 2, 'RESULTS': 3, 'CONCLUSIONS': 4}
 
         sentences_train = self.train_df["text"].tolist()
         sentences_val = self.val_df["text"].tolist()
         sentences_test = self.test_df["text"].tolist()
 
-        y_train = label_encoder.fit_transform(
-            self.train_df["target"].to_numpy())
-        y_val = label_encoder.transform(self.val_df["target"].to_numpy())
-        y_test = label_encoder.transform(self.test_df["target"].to_numpy())
+        y_train = np.array([name_mapping[label] for label in self.train_df["target"].to_numpy()])
+        y_val = np.array([name_mapping[label] for label in self.val_df["target"].to_numpy()])
+        y_test = np.array([name_mapping[label] for label in self.test_df["target"].to_numpy()])
 
         return sentences_train, sentences_val, sentences_test, y_train, y_val, y_test
 

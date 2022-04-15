@@ -5,7 +5,11 @@ from models.vanilla_NN import Vanilla_NN
 from models.conv_1D import Conv1D_model
 from models.bidirectional_LSTM import BiRNN_LSTM
 
+#############
+#############
 # TASK 1
+#############
+#############
 
 ### Loading and Preprocessing Datasets
 dataset_preprocessing = Preprocessing(stemming=False, lemmatisation=False)
@@ -26,7 +30,12 @@ model.train(X_train, y_train, X_val, y_val, load_model=True)
 y_pred = model.predict(X_test)
 evaluate("vanilla_nn_tf_idf", y_pred, y_test, save_results=True)
 
+
+#############
+#############
 # TASK 2
+#############
+#############
 
 ## Word2Vec
 
@@ -128,4 +137,8 @@ model.train(X_train, y_train, X_val, y_val, load_model=False)
 y_pred = model.predict(X_test)
 evaluate("BiRNN_kerasembed", y_pred, y_test, save_results=True)
 
+#############
+#############
 # TASK 3
+#############
+#############
