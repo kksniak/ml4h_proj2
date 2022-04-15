@@ -33,20 +33,35 @@ def load_dataset(filename: String) -> pd.DataFrame:
         lines = f.readlines()
 
     sentences = list()
+    position_features = list()
+    sentence_number = 0
 
     for line in lines:
         # new abstract
         if line[:3] == "###":
+            sentence_number = 0
             abstratct_id = int(line[3:])
 
         # new sentence
         elif len(line.strip()):
+            sentence_number += 1
             data = dict()
             data["abstract_id"], data["target"], data[
                 "text"] = abstratct_id, line.split("\t")[0], line.split("\t")[1]
             sentences.append(data)
 
-    return pd.DataFrame(sentences)
+        else:
+            for i in range(sentence_number):
+                data = dict()
+                data['relative_position'] = [(i+1)/sentence_number, sentence_number]
+                position_features.append(data)
+    
+    final_sentences = list()
+    for i, data in enumerate(sentences):
+        data.update(position_features[i])
+        final_sentences.append(data)
+
+    return pd.DataFrame(final_sentences)
 
 
 def set_seeds() -> None:
