@@ -16,14 +16,19 @@ class BiRNN_LSTM_POS:
 
     def __init__(self,
                  embedding_type: Literal["word2vec", "fastText", "kerasEmbed"],
-                 embedding_layers: List[keras.layers.Layer] = []):
+                 embedding_layers: List[keras.layers.Layer] = [], use_len_and_position: bool = False):
         self.embedding_type = embedding_type
         self.embedding_layers = embedding_layers
+        self.use_len_and_position = use_len_and_position
 
-    def init_model(self, input_shape: Tuple, pos_shape: Tuple):
+    def init_model(self, input_shape: Tuple, pos_shape: Tuple, len_shape:Tuple = None):
         inputs = keras.Input(shape=input_shape, name="sentences")
         x = inputs
         pos_input = keras.Input(shape = pos_shape, name="pos")
+
+        if self.use_len_and_position:
+            len_and_position = keras.Input(shape = len_shape, name="len_and_position")
+
         for layer in self.embedding_layers:
             x = layer(x)
 
@@ -32,42 +37,73 @@ class BiRNN_LSTM_POS:
         x = Bidirectional(LSTM(32))(x)
 
         pos_x = Dense(30,activation="relu")(pos_input)
-        concatted = keras.layers.Concatenate()([x,pos_x])
+        concated = keras.layers.Concatenate()([x,pos_x])
 
-        x = Dense(20, activation="relu")(concatted)
+        if self.use_len_and_position:
+            concated = keras.layers.Concatenate()([concated,len_and_position])
+
+        x = Dense(20, activation="relu")(concated)
         outputs = Dense(5, activation="softmax")(x)
 
-        self.clf = keras.Model(inputs = [inputs,pos_input], outputs = outputs)
+        if self.use_len_and_position:
+            self.clf = keras.Model(inputs = [inputs,pos_input,len_and_position], outputs = outputs)
+        else:
+            self.clf = keras.Model(inputs = [inputs,pos_input], outputs = outputs)
+            
         self.clf.summary()
 
     def train(self, X_train: np.array, y_train: np.array, X_val: np.array,
-              y_val: np.array, pos_train:np.array, pos_val:np.array, load_model: boolean):
+              y_val: np.array, pos_train:np.array, pos_val:np.array, abstractPosFeat_train:np.array = None, abstractPosFeat_val:np.array=None, load_model: bool = False):
+
+        if self.use_len_and_position:
+            len_shape = (abstractPosFeat_train.shape[-1],)
+            filename = "code/models/models_checkpoints/biRNN_POS_abstractPos_"
+            
+        else:
+            len_shape = None
+            filename = "code/models/models_checkpoints/biRNN_POS_"
 
         if load_model:
             print("Loading model...")
             self.clf = keras.models.load_model(
-                "code/models/models_checkpoints/biRNN_POS_" + self.embedding_type)
+                filename + self.embedding_type)
             return
 
         print("Fitting model...")
         set_seeds()
-        self.init_model(input_shape=(X_train.shape[-1],), pos_shape=(pos_train.shape[-1],))
+
+
+        self.init_model(input_shape=(X_train.shape[-1],), pos_shape=(pos_train.shape[-1],),len_shape = len_shape)
 
         callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
         self.clf.compile("adam",
                          "sparse_categorical_crossentropy",
                          metrics=["accuracy"])
-        self.clf.fit({"sentences": X_train,"pos":pos_train},
+        
+        if self.use_len_and_position:
+            train_data = {"sentences": X_train,"pos":pos_train, "len_and_position":abstractPosFeat_train}
+            val_data = [X_val, pos_val,abstractPosFeat_val]
+        else:
+            train_data = {"sentences": X_train,"pos":pos_train}
+            val_data = [X_val, pos_val]
+            
+
+        self.clf.fit(train_data,
                      y_train,
                      batch_size=512,
                      epochs=10,
-                     validation_data=([X_val, pos_val], y_val),
+                     validation_data=(val_data, y_val),
                      callbacks=[callback])
 
         print("Saving model...")
-        self.clf.save("code/models/models_checkpoints/biRNN_POS_" +
+        self.clf.save(filename +
                       self.embedding_type)
 
-    def predict(self, X_test:np.array, pos_test:np.array):
+    def predict(self, X_test:np.array, pos_test:np.array,abstractPosFeat_test:np.array = None):
         print("Making predictions...")
-        return self.clf.predict({"sentences": X_test,"pos":pos_test})
+        if self.use_len_and_position:
+            test_data = {"sentences": X_test,"pos": pos_test, "len_and_position": abstractPosFeat_test}
+        else:
+            test_data = {"sentences": X_test,"pos": pos_test}
+
+        return self.clf.predict(test_data)
