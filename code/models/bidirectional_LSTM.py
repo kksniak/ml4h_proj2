@@ -46,7 +46,7 @@ class BiRNN_LSTM:
 
         print("Fitting model...")
         set_seeds()
-        self.init_model(input_shape=(X_train.shape[-1]))
+        self.init_model(input_shape=(X_train.shape[-1],) )
 
         callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
         self.clf.compile("adam",
