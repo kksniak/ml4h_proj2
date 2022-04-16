@@ -1,101 +1,162 @@
-from transformers import AutoTokenizer, AutoConfig, TFAutoModelForSequenceClassification, pipeline
-import numpy as np
-from datasets import Dataset, DatasetDict
-from transformers import DataCollatorWithPadding
+from datasets import Dataset, DatasetDict, load_metric
 from sklearn.utils import compute_class_weight
+import numpy as np
+from transformers import AutoTokenizer, DataCollatorWithPadding, AutoModelForSequenceClassification, TrainingArguments, Trainer, get_scheduler, BertForSequenceClassification, TrainerCallback
+from torch.utils.data import DataLoader
+from torch.optim import AdamW
+import torch
+from tqdm.auto import tqdm
+from datetime import datetime
+import os
+
+from utils import load_all_datasets
+from evaluation import evaluate
 
 
-class BERT():
+class CustomTrainer(Trainer):
 
-    def __init__(self, model_name='bert-base-uncased'):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        # forward pass
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+        # compute custom loss (suppose one has 3 labels with different weights)
+        loss_fct = torch.nn.CrossEntropyLoss(weight=torch.tensor(
+            [2.24909476, 0.61220699, 1.30219008, 0.57730516, 2.37068504]))
+        loss = loss_fct(logits.view(-1, self.model.config.num_labels),
+                        labels.view(-1))
+        return (loss, outputs) if return_outputs else loss
+
+
+class SaveCallback(TrainerCallback):
+
+    def __init__(self, bert):
+        self.bert = bert
+
+    def on_epoch_end(self, args, state, control, **kwargs):
+        self.bert.save()
+
+
+class Bert:
+
+    def __init__(self, model_name='emilyalsentzer/Bio_ClinicalBERT'):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        config = AutoConfig.from_pretrained(model_name, num_labels=5)
-        self.model = TFAutoModelForSequenceClassification.from_pretrained(
-            model_name, config=config)
-        self.model.layers[0].trainable = False
-        self.model.compile(optimizer='adam',
-                           loss='categorical_crossentropy',
-                           metrics=['accuracy'])
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            model_name, num_labels=5)
+
+        self.training_args = TrainingArguments(
+            output_dir="./logs",
+            learning_rate=2e-5,
+            per_device_train_batch_size=16,
+            per_device_eval_batch_size=16,
+            num_train_epochs=3,
+            weight_decay=0.01,
+        )
+        self.id = str(datetime.now())
 
     def _preprocess(self, df):
         df = df.rename(columns={'target': 'label'})
 
         label_map = {
-            'BACKGROUND': np.array([1, 0, 0, 0, 0]),
-            'METHODS': np.array([0, 1, 0, 0, 0]),
-            'CONCLUSIONS': np.array([0, 0, 1, 0, 0]),
-            'RESULTS': np.array([0, 0, 0, 1, 0]),
-            'OBJECTIVE': np.array([0, 0, 0, 0, 1]),
+            'BACKGROUND': 0,
+            'METHODS': 1,
+            'CONCLUSIONS': 2,
+            'RESULTS': 3,
+            'OBJECTIVE': 4
         }
 
         df['label'] = df['label'].map(label_map)
 
-        train_labels = df['label'].map(lambda l: np.argmax(l)).to_numpy()
-        class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(train_labels), y=train_labels)
-        class_weights = dict(enumerate(class_weights))
+        return Dataset.from_pandas(df)
 
-        return Dataset.from_pandas(df), class_weights
+    def preprocess(self, train, valid, test, debug=False):
+        train = self._preprocess(train)
+        valid = self._preprocess(valid)
+        test = self._preprocess(test)
 
-    def preprocess(self, train, valid, test, small=False, half=False):
-        train, class_weights = self._preprocess(train)
-        valid, _ = self._preprocess(valid)
-        test, _ = self._preprocess(test)
+        if debug:
+            train = train.shuffle(seed=42).select(range(20))
+            valid = valid.shuffle(seed=42).select(range(20))
+            test = test.shuffle(seed=42).select(range(20))
 
         dataset = DatasetDict()
         dataset['train'] = train
         dataset['valid'] = valid
         dataset['test'] = test
 
-        if small:
-            small_dataset = DatasetDict()
-            small_dataset['train'] = dataset['train'].shuffle(seed=42).select(
-                range(100))
-            small_dataset['valid'] = dataset['valid'].shuffle(seed=42).select(
-                range(20))
-            small_dataset['test'] = dataset['test'].shuffle(seed=42).select(
-                range(50))
-            dataset = small_dataset
-        elif half:
-            half_dataset = DatasetDict()
-            half_dataset['train'] = dataset['train'].shuffle(seed=42).select(
-                range(500000))
-            half_dataset['valid'] = dataset['valid'].shuffle(seed=42).select(
-                range(20000))
-            half_dataset['test'] = dataset['test'].shuffle(seed=42).select(
-                range(20000))
-            dataset = half_dataset
+        tokenized_datasets = dataset.map(lambda sample: self.tokenizer(
+            sample['text'],
+            truncation=True,
+        ))
 
-        tokenized_dataset = dataset.map(
-            lambda sample: bert.tokenizer(sample['text'], truncation=True))
+        return tokenized_datasets
 
-        data_collator = DataCollatorWithPadding(tokenizer=bert.tokenizer,
-                                                return_tensors='tf')
+    def train(self, tokenized_datasets):
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
-        return {
-            k: v.to_tf_dataset(
-                columns=['attention_mask', 'input_ids', 'token_type_ids'],
-                label_cols=['label'],
-                shuffle=True,
-                collate_fn=data_collator,
-                batch_size=8,
-            ) for k, v in tokenized_dataset.items()
-        }, class_weights 
+        metric = load_metric("accuracy")
 
+        def compute_metrics(eval_pred):
+            logits, labels = eval_pred
+            predictions = np.argmax(logits, axis=-1)
+            self.save()
+            return metric.compute(predictions=predictions, references=labels)
+
+        self.trainer = CustomTrainer(model=self.model,
+                                     args=self.training_args,
+                                     train_dataset=tokenized_datasets["train"],
+                                     eval_dataset=tokenized_datasets["test"],
+                                     tokenizer=self.tokenizer,
+                                     data_collator=data_collator,
+                                     compute_metrics=compute_metrics,
+                                     callbacks=[SaveCallback(self)])
+
+        self.trainer.train()
+
+    def save(self, path=None):
+        if path is None:
+            path = f'checkpoints/{self.id}'
+        self.trainer.save_model(path)
+
+    def load(self, path=None):
+
+        if path is None:
+            filename = os.listdir('checkpoints')[-1]
+            path = f'checkpoints/{filename}'
+
+        self.model = BertForSequenceClassification.from_pretrained(path)
+
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        self.trainer = CustomTrainer(
+            model=self.model,
+            args=self.training_args,
+            train_dataset=tokenized_datasets["train"],
+            eval_dataset=tokenized_datasets["test"],
+            tokenizer=self.tokenizer,
+            data_collator=data_collator,
+        )
+
+    def predict(self, dataset):
+        return self.trainer.predict(dataset)[0]
 
 
 if __name__ == '__main__':
-    from datasets import Dataset, load_dataset
-    from transformers import DataCollatorWithPadding
-    from utils import load_all_datasets
-
-    bert = BERT(model_name='cambridgeltl/SapBERT-from-PubMedBERT-fulltext')
 
     train, valid, test = load_all_datasets()
 
-    datasets, class_weights = bert.preprocess(train, valid, test, small=False, half=True)
+    bert = Bert()
 
-    bert.model.summary()
-    bert.model.fit(x=datasets['train'],
-                   validation_data=datasets['valid'],
-                   epochs=3,
-                   class_weight=class_weights)
+    tokenized_datasets = bert.preprocess(train, valid, test, debug=True)
+
+    # Train a new model
+    bert.train(tokenized_datasets)
+
+    # Load a saved model
+    # bert.load()
+
+    # Evaluation
+    preds = bert.predict(tokenized_datasets['test'])
+
+    y_true = np.array(tokenized_datasets['test']['label'])
+
+    evaluate('test', preds, y_true, save_results=True)

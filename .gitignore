@@ -3,3 +3,8 @@ data/
 __pycache__/
 embeddings_checkpoints/
 models_checkpoints/
+logs/
+checkpoints/
+.vscode/
+*.pyc
+.env
