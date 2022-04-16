@@ -71,7 +71,7 @@ evaluate("BiLSTM_POS_word2vec", y_pred, y_test, save_results=True)
 model =ResNet1D_model("word2vec",word2vec_embedding_layers,use_len_and_position = True)
 model.train(X_train,y_train, X_val, y_val,abstractPosFeat_train=abstractPosFeat_train,
             abstractPosFeat_val=abstractPosFeat_val, load_model=False)
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test,abstractPosFeat_test)
 evaluate("resnet1d_position_word2vec", y_pred, y_test, save_results=True)
 
 
@@ -115,7 +115,7 @@ evaluate("BiLSTM_POS_fastText", y_pred, y_test, save_results=True)
 model =ResNet1D_model("fastText",fasttext_embedding_layers,use_len_and_position = True)
 model.train(X_train,y_train, X_val, y_val,abstractPosFeat_train=abstractPosFeat_train,
             abstractPosFeat_val=abstractPosFeat_val, load_model=False)
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test,abstractPosFeat_test)
 evaluate("resnet1d_position_fastText", y_pred, y_test, save_results=True)
 
 
@@ -158,6 +158,6 @@ evaluate("BiLSTM_POS_kerasEmbed", y_pred, y_test, save_results=True)
 model =ResNet1D_model("kerasEmbed",keras_embedding_layers,use_len_and_position = True)
 model.train(X_train,y_train, X_val, y_val,abstractPosFeat_train=abstractPosFeat_train,
             abstractPosFeat_val=abstractPosFeat_val, load_model=False)
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test,abstractPosFeat_test)
 evaluate("resnet1d_position_kerasEmbed", y_pred, y_test, save_results=True)
 
