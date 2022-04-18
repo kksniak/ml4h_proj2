@@ -1,61 +1,72 @@
-from datasets import Dataset, DatasetDict, load_metric
-from sklearn.utils import compute_class_weight
+from transformers import AutoTokenizer, AutoConfig, TFAutoModelForSequenceClassification, pipeline
 import numpy as np
-from transformers import AutoTokenizer, DataCollatorWithPadding, AutoModelForSequenceClassification, TrainingArguments, Trainer, get_scheduler, BertForSequenceClassification, TrainerCallback
-from torch.utils.data import DataLoader
-from torch.optim import AdamW
-import torch
-from tqdm.auto import tqdm
+from datasets import Dataset, DatasetDict
+from transformers import DataCollatorWithPadding
+from sklearn.utils import compute_class_weight
+from tensorflow.keras.losses import SparseCategoricalCrossentropy
+import pickle
 from datetime import datetime
+import tensorflow as tf
+from typing import Literal, Union
 import os
 
-from utils import load_all_datasets
-from evaluation import evaluate
+BASE_PATH = './'
+CACHE_PATH = os.path.join(BASE_PATH, 'cache')
+CHECKPOINT_PATH = os.path.join(BASE_PATH, 'checkpoints')
+JOBS_PATH = os.path.join(BASE_PATH, 'jobs')
 
 
-class CustomTrainer(Trainer):
+class BERT():
 
-    def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.get("labels")
-        # forward pass
-        outputs = model(**inputs)
-        logits = outputs.get("logits")
-        # compute custom loss (suppose one has 3 labels with different weights)
-        loss_fct = torch.nn.CrossEntropyLoss(weight=torch.tensor(
-            [2.24909476, 0.61220699, 1.30219008, 0.57730516, 2.37068504]))
-        loss = loss_fct(logits.view(-1, self.model.config.num_labels),
-                        labels.view(-1))
-        return (loss, outputs) if return_outputs else loss
+    def __init__(self, params):
+        self.params = params
 
+        self.tokenizer = AutoTokenizer.from_pretrained(self.params['model'])
+        config = AutoConfig.from_pretrained(self.params['model'], num_labels=5)
+        self.model = TFAutoModelForSequenceClassification.from_pretrained(
+            self.params['model'], config=config, from_pt=True)
+        self.model.layers[0].trainable = not self.params['freeze_base_layer']
+        self.model.compile(optimizer='adam',
+                           loss=SparseCategoricalCrossentropy(from_logits=True),
+                           metrics=['accuracy'])
 
-class SaveCallback(TrainerCallback):
+        self.model_short = self.params['model'].split('/')[-1]
+        timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        self.id = f'{self.model_short}_{self.params["dataset"]}_{timestamp}'
 
-    def __init__(self, bert):
-        self.bert = bert
+        if self.params['checkpoint']:
+            self.load_checkpoint()
 
-    def on_epoch_end(self, args, state, control, **kwargs):
-        self.bert.save()
+    def load_checkpoint(self):
+        if self.params['checkpoint'] is True:
+            checkpoints = os.listdir(os.path.join(CHECKPOINT_PATH))
+            checkpoints = [
+                c for c in checkpoints if c.startswith(MODEL_NAME_SHORT)
+            ]
+            checkpoint = os.path.join(CHECKPOINT_PATH, checkpoints[-1])
 
+        print('Loading checkpoint:', checkpoint)
+        self.model.load_weights(checkpoint)
 
-class Bert:
+    def load_data(self):
+        train, valid, test = load_prepared_datasets(
+            variant=self.params['dataset'])
+        self.tf_dataset, self.dataset, self.class_weights = self.preprocess(
+            train,
+            valid,
+            test,
+            restore_from_cache=self.params['load_cached_dataset'])
 
-    def __init__(self, model_name='emilyalsentzer/Bio_ClinicalBERT'):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_name, num_labels=5)
+    def train(self):
+        checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+            os.path.join(CHECKPOINT_PATH, self.id))
 
-        for param in self.model.bert.parameters():
-            param.requires_grad = False
-
-        self.training_args = TrainingArguments(
-            output_dir="./logs",
-            learning_rate=2e-5,
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=16,
-            num_train_epochs=3,
-            weight_decay=0.01,
-        )
-        self.id = str(datetime.now())
+        bert.model.summary()
+        bert.model.fit(x=self.tf_dataset['train'],
+                       validation_data=self.tf_dataset['valid'],
+                       epochs=self.params['epochs'],
+                       class_weight=self.class_weights,
+                       callbacks=[checkpoint_callback])
 
     def _preprocess(self, df):
         df = df.rename(columns={'target': 'label'})
@@ -65,104 +76,108 @@ class Bert:
             'METHODS': 1,
             'CONCLUSIONS': 2,
             'RESULTS': 3,
-            'OBJECTIVE': 4
+            'OBJECTIVE': 4,
         }
 
         df['label'] = df['label'].map(label_map)
 
-        return Dataset.from_pandas(df)
+        train_labels = df['label'].to_numpy()
+        class_weights = compute_class_weight(class_weight='balanced',
+                                             classes=np.unique(train_labels),
+                                             y=train_labels)
+        class_weights = dict(enumerate(class_weights))
 
-    def preprocess(self, train, valid, test, debug=False):
-        train = self._preprocess(train)
-        valid = self._preprocess(valid)
-        test = self._preprocess(test)
+        return Dataset.from_pandas(df), class_weights
 
-        # Use a subset for performance reasons
-        train = train.shuffle(seed=42).select(range(100000))
+    def preprocess(self,
+                   train,
+                   valid,
+                   test,
+                   cache=True,
+                   restore_from_cache=False):
+        if restore_from_cache:
+            dataset = DatasetDict.load_from_disk(
+                os.path.join(CACHE_PATH, 'dataset'))
+            tokenized_dataset = DatasetDict.load_from_disk(
+                os.path.join(CACHE_PATH, 'tokenized_dataset'))
+            with open(os.path.join(CACHE_PATH, 'class_weights.pkl'), 'rb') as f:
+                class_weights = pickle.load(f)
 
-        if debug:
-            train = train.shuffle(seed=42).select(range(20))
-            valid = valid.shuffle(seed=42).select(range(20))
-            test = test.shuffle(seed=42).select(range(20))
+        else:
+            train, class_weights = self._preprocess(train)
+            valid, _ = self._preprocess(valid)
+            test, _ = self._preprocess(test)
 
-        dataset = DatasetDict()
-        dataset['train'] = train
-        dataset['valid'] = valid
-        dataset['test'] = test
+            dataset = DatasetDict()
+            dataset['train'] = train
+            dataset['valid'] = valid
+            dataset['test'] = test
 
-        tokenized_datasets = dataset.map(lambda sample: self.tokenizer(
-            sample['text'],
-            truncation=True,
-        ))
+            tokenized_dataset = dataset.map(
+                lambda sample: bert.tokenizer(sample['text'], truncation=True))
 
-        return tokenized_datasets
+        data_collator = DataCollatorWithPadding(tokenizer=bert.tokenizer,
+                                                return_tensors='tf')
 
-    def train(self, tokenized_datasets):
-        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        tf_dataset = {
+            'train':
+                tokenized_dataset['train'].to_tf_dataset(
+                    columns=['attention_mask', 'input_ids', 'token_type_ids'],
+                    label_cols=['label'],
+                    shuffle=True,
+                    collate_fn=data_collator,
+                    batch_size=self.params['batch_size'],
+                ),
+            'valid':
+                tokenized_dataset['valid'].to_tf_dataset(
+                    columns=['attention_mask', 'input_ids', 'token_type_ids'],
+                    label_cols=['label'],
+                    shuffle=True,
+                    collate_fn=data_collator,
+                    batch_size=self.params['batch_size'],
+                ),
+            'test':
+                tokenized_dataset['test'].to_tf_dataset(
+                    columns=['attention_mask', 'input_ids', 'token_type_ids'],
+                    label_cols=['label'],
+                    shuffle=True,
+                    collate_fn=data_collator,
+                    batch_size=1,
+                ),
+        }
 
-        metric = load_metric("accuracy")
+        if cache and not restore_from_cache:
+            dataset.save_to_disk(os.path.join(CACHE_PATH, 'dataset'))
+            tokenized_dataset.save_to_disk(
+                os.path.join(CACHE_PATH, 'tokenized_dataset'))
+            with open(os.path.join(CACHE_PATH, 'class_weights.pkl'), 'wb') as f:
+                pickle.dump(class_weights, f)
 
-        def compute_metrics(eval_pred):
-            logits, labels = eval_pred
-            predictions = np.argmax(logits, axis=-1)
-            self.save()
-            return metric.compute(predictions=predictions, references=labels)
+        return tf_dataset, dataset, class_weights
 
-        self.trainer = CustomTrainer(model=self.model,
-                                     args=self.training_args,
-                                     train_dataset=tokenized_datasets["train"],
-                                     eval_dataset=tokenized_datasets["test"],
-                                     tokenizer=self.tokenizer,
-                                     data_collator=data_collator,
-                                     compute_metrics=compute_metrics,
-                                     callbacks=[SaveCallback(self)])
-
-        self.trainer.train()
-
-    def save(self, path=None):
-        if path is None:
-            path = f'checkpoints/{self.id}'
-        self.trainer.save_model(path)
-
-    def load(self, path=None):
-
-        if path is None:
-            filename = os.listdir('checkpoints')[-1]
-            path = f'checkpoints/{filename}'
-
-        self.model = BertForSequenceClassification.from_pretrained(path)
-
-        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
-        self.trainer = CustomTrainer(
-            model=self.model,
-            args=self.training_args,
-            train_dataset=tokenized_datasets["train"],
-            eval_dataset=tokenized_datasets["test"],
-            tokenizer=self.tokenizer,
-            data_collator=data_collator,
-        )
-
-    def predict(self, dataset):
-        return self.trainer.predict(dataset)[0]
+    def evaluate(self):
+        preds = self.model.predict(self.tf_dataset['test'])[0]
+        y_true = np.array(self.dataset['test']['label'])
+        evaluate('test',
+                 preds,
+                 y_true,
+                 save_results=self.params['save_results'])
 
 
 if __name__ == '__main__':
+    from datasets import Dataset, load_dataset
+    from transformers import DataCollatorWithPadding
+    from sklearn.model_selection import train_test_split
+    import json
 
-    train, valid, test = load_all_datasets()
+    from utils import load_prepared_datasets
+    from evaluation import evaluate
 
-    bert = Bert()
+    for job in os.listdir(JOBS_PATH):
+        with open(os.path.join(JOBS_PATH, job), 'r') as f:
+            params = json.load(f)
 
-    tokenized_datasets = bert.preprocess(train, valid, test, debug=False)
-
-    # Train a new model
-    bert.train(tokenized_datasets)
-
-    # Load a saved model
-    # bert.load()
-
-    # Evaluation
-    preds = bert.predict(tokenized_datasets['test'])
-
-    y_true = np.array(tokenized_datasets['test']['label'])
-
-    evaluate('test', preds, y_true, save_results=True)
+        bert = BERT(params=params)
+        bert.load_data()
+        bert.train()
+        bert.evaluate()
