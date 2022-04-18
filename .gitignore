@@ -8,3 +8,6 @@ checkpoints/
 .vscode/
 *.pyc
 .env
+jobs/
+cache/
+results/

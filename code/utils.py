@@ -1,7 +1,7 @@
 import os
 import random
 from tokenize import String
-from typing import Tuple
+from typing import Tuple, Literal
 import pandas as pd
 
 import numpy as np
@@ -10,10 +10,13 @@ import spacy
 from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_classif
+from sklearn.model_selection import train_test_split
+import pickle
 
 import pathlib
 
 SEED = 2137
+DATA_PATH = 'data'
 
 
 def load_all_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -55,9 +58,10 @@ def load_dataset(filename: String) -> pd.DataFrame:
         else:
             for i in range(sentence_number):
                 data = dict()
-                data['relative_position'] = [(i+1)/sentence_number, sentence_number]
+                data['relative_position'] = [(i + 1) / sentence_number,
+                                             sentence_number]
                 position_features.append(data)
-    
+
     final_sentences = list()
     for i, data in enumerate(sentences):
         data.update(position_features[i])
@@ -73,21 +77,25 @@ def set_seeds() -> None:
     np.random.seed(SEED)
     random.seed(SEED)
 
-def fast_feature_selector(n_feats: int , X_train: np.array, y_train: np.array, X_test: np.array) -> Tuple[np.array, np.array]:
+
+def fast_feature_selector(n_feats: int, X_train: np.array, y_train: np.array,
+                          X_test: np.array) -> Tuple[np.array, np.array]:
     selector_1 = VarianceThreshold()
     X_train = selector_1.fit_transform(X_train, y_train)
     X_test = selector_1.transform(X_test)
-    selector_2 = SelectKBest(f_classif, k = n_feats)
+    selector_2 = SelectKBest(f_classif, k=n_feats)
     X_train = selector_2.fit_transform(X_train, y_train)
     X_test = selector_2.transform(X_test)
 
     return X_train, X_test
 
 
-def create_POS_encoding(sentences:list, filename:str, vectorizer:TfidfVectorizer = None) -> TfidfVectorizer:
+def create_POS_encoding(sentences: list,
+                        filename: str,
+                        vectorizer: TfidfVectorizer = None) -> TfidfVectorizer:
     nlp = spacy.load("en_core_web_sm")
     pos = []
-    for  sentence in tqdm(sentences):
+    for sentence in tqdm(sentences):
         doc = nlp(sentence)
         pos.append(" ".join([w.pos_ for w in doc]))
 
@@ -98,5 +106,89 @@ def create_POS_encoding(sentences:list, filename:str, vectorizer:TfidfVectorizer
     else:
         X_tf = vectorizer.transform(pos).toarray()
 
-    np.save(pathlib.Path(__file__).parents[1].joinpath(f"data/{filename}.npy"),X_tf)
+    np.save(
+        pathlib.Path(__file__).parents[1].joinpath(f"data/{filename}.npy"),
+        X_tf)
     return vectorizer
+
+
+def prepare_small_datasets():
+    train, valid, test = load_all_datasets()
+
+    # Small dataset
+    train_small, _ = train_test_split(train,
+                                      train_size=100000,
+                                      random_state=SEED,
+                                      stratify=train['target'])
+    valid_small, _ = train_test_split(valid,
+                                      train_size=20000,
+                                      random_state=SEED,
+                                      stratify=valid['target'])
+    test_small, _ = train_test_split(test,
+                                     train_size=20000,
+                                     random_state=SEED,
+                                     stratify=test['target'])
+
+    # Mini dataset
+    train_mini, _ = train_test_split(train,
+                                     train_size=10000,
+                                     random_state=SEED,
+                                     stratify=train['target'])
+    valid_mini, _ = train_test_split(valid,
+                                     train_size=2000,
+                                     random_state=SEED,
+                                     stratify=valid['target'])
+    test_mini, _ = train_test_split(test,
+                                    train_size=2000,
+                                    random_state=SEED,
+                                    stratify=test['target'])
+
+    # Debug dataset
+    train_debug, _ = train_test_split(train,
+                                      train_size=100,
+                                      random_state=SEED,
+                                      stratify=train['target'])
+    valid_debug, _ = train_test_split(valid,
+                                      train_size=100,
+                                      random_state=SEED,
+                                      stratify=valid['target'])
+    test_debug, _ = train_test_split(test,
+                                     train_size=100,
+                                     random_state=SEED,
+                                     stratify=test['target'])
+
+    dfs = {
+        'train_full': train,
+        'valid_full': valid,
+        'test_full': test,
+        'train_small': train_small,
+        'valid_small': valid_small,
+        'test_small': test_small,
+        'train_mini': train_mini,
+        'valid_mini': valid_mini,
+        'test_mini': test_mini,
+        'train_debug': train_debug,
+        'valid_debug': valid_debug,
+        'test_debug': test_debug,
+    }
+
+    for name, df in dfs.items():
+        with open(f'{DATA_PATH}/{name}.pkl', 'wb') as f:
+            pickle.dump(df, f)
+
+
+def load_prepared_datasets(
+        variant: Literal['full', 'small', 'mini', 'debug']) -> pd.DataFrame:
+
+    with open(f'{DATA_PATH}/train_{variant}.pkl', 'rb') as f:
+        train = pickle.load(f)
+    with open(f'{DATA_PATH}/valid_{variant}.pkl', 'rb') as f:
+        valid = pickle.load(f)
+    with open(f'{DATA_PATH}/test_{variant}.pkl', 'rb') as f:
+        test = pickle.load(f)
+
+    return train, valid, test
+
+
+if __name__ == '__main__':
+    prepare_small_datasets()

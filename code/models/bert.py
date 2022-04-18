@@ -44,6 +44,9 @@ class Bert:
         self.model = AutoModelForSequenceClassification.from_pretrained(
             model_name, num_labels=5)
 
+        for param in self.model.bert.parameters():
+            param.requires_grad = False
+
         self.training_args = TrainingArguments(
             output_dir="./logs",
             learning_rate=2e-5,
@@ -73,6 +76,9 @@ class Bert:
         train = self._preprocess(train)
         valid = self._preprocess(valid)
         test = self._preprocess(test)
+
+        # Use a subset for performance reasons
+        train = train.shuffle(seed=42).select(range(100000))
 
         if debug:
             train = train.shuffle(seed=42).select(range(20))
@@ -146,7 +152,7 @@ if __name__ == '__main__':
 
     bert = Bert()
 
-    tokenized_datasets = bert.preprocess(train, valid, test, debug=True)
+    tokenized_datasets = bert.preprocess(train, valid, test, debug=False)
 
     # Train a new model
     bert.train(tokenized_datasets)
