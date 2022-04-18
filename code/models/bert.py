@@ -34,11 +34,11 @@ class BERT():
         timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         self.id = f'{self.model_short}_{self.params["dataset"]}_{timestamp}'
 
-        if self.params['checkpoint']:
+        if self.params['load_checkpoint']:
             self.load_checkpoint()
 
     def load_checkpoint(self):
-        if self.params['checkpoint'] is True:
+        if self.params['load_checkpoint'] is True:
             checkpoints = os.listdir(os.path.join(CHECKPOINT_PATH))
             checkpoints = [
                 c for c in checkpoints if c.startswith(MODEL_NAME_SHORT)
@@ -66,7 +66,8 @@ class BERT():
                        validation_data=self.tf_dataset['valid'],
                        epochs=self.params['epochs'],
                        class_weight=self.class_weights,
-                       callbacks=[checkpoint_callback])
+                       callbacks=[checkpoint_callback]
+                       if self.params['save_checkpoints'] else [])
 
     def _preprocess(self, df):
         df = df.rename(columns={'target': 'label'})
