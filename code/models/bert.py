@@ -141,7 +141,7 @@ class BERT():
                 tokenized_dataset['test'].to_tf_dataset(
                     columns=['attention_mask', 'input_ids', 'token_type_ids'],
                     label_cols=['label'],
-                    shuffle=True,
+                    shuffle=False,
                     collate_fn=data_collator,
                     batch_size=1,
                 ),
