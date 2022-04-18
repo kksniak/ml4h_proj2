@@ -158,7 +158,7 @@ class BERT():
     def evaluate(self):
         preds = self.model.predict(self.tf_dataset['test'])[0]
         y_true = np.array(self.dataset['test']['label'])
-        evaluate('test',
+        evaluate(self.id,
                  preds,
                  y_true,
                  save_results=self.params['save_results'])
