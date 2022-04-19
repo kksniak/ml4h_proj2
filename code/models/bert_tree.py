@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoConfig, TFAutoModel, DataCollatorWithPadding
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier, GradientBoostingClassifier
 import numpy as np
+import pickle
 
 from models.bert import BERT
 from evaluation import evaluate
@@ -11,7 +12,7 @@ bert_params = {
     'learning_rate': 0.0003,
     'batch_size': 1,
     'epochs': 4,
-    'dataset': 'mini',
+    'dataset': 'debug',
     'freeze_base_layer': True,
     'load_checkpoint': False,
     'save_checkpoints': False,
@@ -70,8 +71,31 @@ class BERTTree:
         y = np.array(self.tokenized_dataset[dataset]['label'])
         return X, y
 
+    def generate_features(self, dataset):
+        X, y = self.compute_features(dataset)
+
+        model_name = bert_params['model'].split('/')[-1]
+        identifier = f'{dataset}_{bert_params["dataset"]}_{model_name}'
+
+        with open(os.path.join('data', f'X_feat_{identifier}.pkl'), 'wb') as f:
+            pickle.dump(X, f)
+
+        with open(os.path.join('data', f'y_{identifier}.pkl'), 'wb') as f:
+            pickle.dump(y, f)
+
     def train(self):
-        X_train, y_train = self.compute_features('train')
+        # Load from cache if exists
+        identifier = f'{bert_params["dataset"]}_{model_name}'
+        if f'X_feat_train_{identifier}.pkl' in os.listdir('data'):
+            with open(os.path.join('data', f'X_feat_train_{identifier}.pkl'),
+                      'rb') as f:
+                X_train = pickle.load(f)
+            with open(os.path.join('data', f'y_train_{identifier}.pkl'),
+                      'rb') as f:
+                y_train = pickle.load(f)
+        else:
+            X_train, y_train = self.compute_features('train')
+
         for clf in self.params['classifiers']:
             print('training', str(clf))
             clf.fit(X_train, y_train)
@@ -100,5 +124,7 @@ if __name__ == '__main__':
 
     bert_tree = BERTTree(params)
     bert_tree.load_data()
+    bert_tree.generate_features('train')
+    bert_tree.generate_features('test')
     bert_tree.train()
     bert_tree.evaluate()
