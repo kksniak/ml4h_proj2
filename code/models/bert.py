@@ -185,12 +185,22 @@ if __name__ == '__main__':
     from transformers import DataCollatorWithPadding
     from sklearn.model_selection import train_test_split
     import json
+    import argparse
 
-    for job in os.listdir(JOBS_PATH):
-        with open(os.path.join(JOBS_PATH, job), 'r') as f:
-            params = json.load(f)
+    from utils import set_seeds
 
-        bert = BERT(params=params)
-        bert.load_data()
-        bert.train()
-        bert.evaluate()
+    parser = argparse.ArgumentParser(description='Point to a job.')
+    parser.add_argument('-j', '--job', action='store')
+    args = parser.parse_args()
+
+    set_seeds()
+
+    job = args.job
+
+    with open(job, 'r') as f:
+        params = json.load(f)
+
+    bert = BERT(params=params)
+    bert.load_data()
+    bert.train()
+    bert.evaluate()

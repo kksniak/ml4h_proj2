@@ -82,8 +82,7 @@ class BERTTree:
                 batch_size=32,
             )
 
-            bert_output = self.model.predict(tf_shard,
-                                             verbose=1)[0]
+            bert_output = self.model.predict(tf_shard, verbose=1)[0]
             X = bert_output.reshape(bert_output.shape[0], -1)
             Xs.append(X)
 
