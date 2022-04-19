@@ -41,7 +41,8 @@ class BERT():
         if self.params['load_checkpoint'] is True:
             checkpoints = os.listdir(os.path.join(CHECKPOINT_PATH))
             checkpoints = [
-                c for c in checkpoints if c.startswith(MODEL_NAME_SHORT)
+                c for c in checkpoints
+                if c.startswith(f'{self.model_short}_{self.params["dataset"]}')
             ]
             checkpoint = os.path.join(CHECKPOINT_PATH, checkpoints[-1])
 
@@ -96,12 +97,13 @@ class BERT():
                    test,
                    cache=True,
                    restore_from_cache=False):
+        cache_path = os.path.join(CACHE_PATH, self.params['dataset'])
         if restore_from_cache:
             dataset = DatasetDict.load_from_disk(
-                os.path.join(CACHE_PATH, 'dataset'))
+                os.path.join(cache_path, 'dataset'))
             tokenized_dataset = DatasetDict.load_from_disk(
-                os.path.join(CACHE_PATH, 'tokenized_dataset'))
-            with open(os.path.join(CACHE_PATH, 'class_weights.pkl'), 'rb') as f:
+                os.path.join(cache_path, 'tokenized_dataset'))
+            with open(os.path.join(cache_path, 'class_weights.pkl'), 'rb') as f:
                 class_weights = pickle.load(f)
 
         else:
@@ -148,10 +150,10 @@ class BERT():
         }
 
         if cache and not restore_from_cache:
-            dataset.save_to_disk(os.path.join(CACHE_PATH, 'dataset'))
+            dataset.save_to_disk(os.path.join(cache_path, 'dataset'))
             tokenized_dataset.save_to_disk(
-                os.path.join(CACHE_PATH, 'tokenized_dataset'))
-            with open(os.path.join(CACHE_PATH, 'class_weights.pkl'), 'wb') as f:
+                os.path.join(cache_path, 'tokenized_dataset'))
+            with open(os.path.join(cache_path, 'class_weights.pkl'), 'wb') as f:
                 pickle.dump(class_weights, f)
 
         return tf_dataset, dataset, class_weights
