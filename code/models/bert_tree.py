@@ -82,15 +82,12 @@ class BERTTree:
                 batch_size=32,
             )
 
-            bert_output = self.model.predict(self.tf_dataset[dataset],
-                                             verbose=1)[0]
+            bert_output = self.model.predict(tf_shard, verbose=1)[0]
             X = bert_output.reshape(bert_output.shape[0], -1)
-            y = np.array(self.tokenized_dataset[dataset]['label'])
             Xs.append(X)
-            ys.append(y)
 
         X = np.concatenate(Xs)
-        y = np.concatenate(ys)
+        y = np.array(self.tokenized_dataset[dataset]['label'])
 
         return X, y
 
@@ -151,3 +148,7 @@ if __name__ == '__main__':
     bert_tree.generate_features('test')
     bert_tree.train()
     bert_tree.evaluate()
+
+    with open(os.path.join('data', f'X_feat_train_debug_Bio_ClinicalBERT.pkl'),
+              'rb') as f:
+        X_train = pickle.load(f)
