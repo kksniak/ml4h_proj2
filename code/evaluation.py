@@ -108,5 +108,5 @@ def evaluate(model_name: str, y_pred_probas: np.ndarray, y_true: np.ndarray,
 
     if save_results:
         write_results(model_name, metrics, figures)
-
+    print('Results for', model_name)
     print(metrics)
