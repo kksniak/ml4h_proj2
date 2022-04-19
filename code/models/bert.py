@@ -14,8 +14,9 @@ from utils import load_prepared_datasets
 from evaluation import evaluate
 
 BASE_PATH = './'
+SCRATCH_PATH = os.path.join('/cluster', 'scratch', 'fekstroem')
 CACHE_PATH = os.path.join(BASE_PATH, 'cache')
-CHECKPOINT_PATH = os.path.join(BASE_PATH, 'checkpoints')
+CHECKPOINT_PATH = os.path.join(SCRATCH_PATH, 'checkpoints')
 JOBS_PATH = os.path.join(BASE_PATH, 'jobs')
 
 
@@ -39,6 +40,9 @@ class BERT():
 
         if self.params['load_checkpoint']:
             self.load_checkpoint()
+
+        with open(os.path.join(CHECKPOINT_PATH, self.id + '.txt'), 'w') as f:
+            params = json.dump(self.params, f)
 
     def load_checkpoint(self):
         if self.params['load_checkpoint'] is True:

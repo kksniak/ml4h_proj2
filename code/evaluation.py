@@ -15,7 +15,7 @@ def write_results(model_name: str, metrics: dict, figures: dict) -> None:
         figures: Dictionary of matplotlib figures to be saved
     """
 
-    directory = f"results/{model_name}"
+    directory = f"/cluster/scratch/fekstroem/results/{model_name}"
     Path(directory).mkdir(parents=True, exist_ok=True)
     with open(f"{directory}/metrics.txt", "w", encoding="utf-8") as f:
         for key, value in metrics.items():
