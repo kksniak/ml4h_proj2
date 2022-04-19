@@ -10,6 +10,9 @@ import tensorflow as tf
 from typing import Literal, Union
 import os
 
+from utils import load_prepared_datasets
+from evaluation import evaluate
+
 BASE_PATH = './'
 CACHE_PATH = os.path.join(BASE_PATH, 'cache')
 CHECKPOINT_PATH = os.path.join(BASE_PATH, 'checkpoints')
@@ -98,15 +101,21 @@ class BERT():
                    cache=True,
                    restore_from_cache=False):
         cache_path = os.path.join(CACHE_PATH, self.params['dataset'])
+        should_preprocess = not restore_from_cache
         if restore_from_cache:
-            dataset = DatasetDict.load_from_disk(
-                os.path.join(cache_path, 'dataset'))
-            tokenized_dataset = DatasetDict.load_from_disk(
-                os.path.join(cache_path, 'tokenized_dataset'))
-            with open(os.path.join(cache_path, 'class_weights.pkl'), 'rb') as f:
-                class_weights = pickle.load(f)
+            try:
+                dataset = DatasetDict.load_from_disk(
+                    os.path.join(cache_path, 'dataset'))
+                tokenized_dataset = DatasetDict.load_from_disk(
+                    os.path.join(cache_path, 'tokenized_dataset'))
+                with open(os.path.join(cache_path, 'class_weights.pkl'),
+                          'rb') as f:
+                    class_weights = pickle.load(f)
+            except FileNotFoundError:
+                print('No cache found, preprocessing dataset...')
+                should_preprocess = True
 
-        else:
+        if should_preprocess:
             train, class_weights = self._preprocess(train)
             valid, _ = self._preprocess(valid)
             test, _ = self._preprocess(test)
@@ -117,9 +126,9 @@ class BERT():
             dataset['test'] = test
 
             tokenized_dataset = dataset.map(
-                lambda sample: bert.tokenizer(sample['text'], truncation=True))
+                lambda sample: self.tokenizer(sample['text'], truncation=True))
 
-        data_collator = DataCollatorWithPadding(tokenizer=bert.tokenizer,
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer,
                                                 return_tensors='tf')
 
         tf_dataset = {
@@ -149,7 +158,7 @@ class BERT():
                 ),
         }
 
-        if cache and not restore_from_cache:
+        if cache and should_preprocess:
             dataset.save_to_disk(os.path.join(cache_path, 'dataset'))
             tokenized_dataset.save_to_disk(
                 os.path.join(cache_path, 'tokenized_dataset'))
@@ -172,9 +181,6 @@ if __name__ == '__main__':
     from transformers import DataCollatorWithPadding
     from sklearn.model_selection import train_test_split
     import json
-
-    from utils import load_prepared_datasets
-    from evaluation import evaluate
 
     for job in os.listdir(JOBS_PATH):
         with open(os.path.join(JOBS_PATH, job), 'r') as f:
