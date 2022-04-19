@@ -66,9 +66,32 @@ class BERTTree:
         }
 
     def compute_features(self, dataset):
-        bert_output = self.model.predict(self.tf_dataset[dataset], verbose=1)[0]
-        X = bert_output.reshape(bert_output.shape[0], -1)
-        y = np.array(self.tokenized_dataset[dataset]['label'])
+        SHARDS = 10
+        Xs = []
+        ys = []
+        for i in range(SHARDS):
+            dataset_shard = self.tokenized_dataset[dataset].shard(
+                num_shards=SHARDS, index=i)
+            data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer,
+                                                    return_tensors='tf')
+            tf_shard = dataset_shard.to_tf_dataset(
+                columns=['attention_mask', 'input_ids', 'token_type_ids'],
+                label_cols=['label'],
+                shuffle=False,
+                collate_fn=data_collator,
+                batch_size=32,
+            )
+
+            bert_output = self.model.predict(self.tf_dataset[dataset],
+                                             verbose=1)[0]
+            X = bert_output.reshape(bert_output.shape[0], -1)
+            y = np.array(self.tokenized_dataset[dataset]['label'])
+            Xs.append(X)
+            ys.append(y)
+
+        X = np.concatenate(Xs)
+        y = np.concatenate(ys)
+
         return X, y
 
     def generate_features(self, dataset):
