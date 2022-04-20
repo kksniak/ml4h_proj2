@@ -44,7 +44,7 @@ class BERT():
             self.model_id, config=config, from_pt=True)
         if self.freeze_bert:
             self.model.bert.trainable = False
-        elif self.freeze_bert_encoder:
+        if self.freeze_bert_encoder:
             self.model.bert.encoder.trainable = False
         self.model.compile(optimizer='adam',
                            loss=SparseCategoricalCrossentropy(from_logits=True),
