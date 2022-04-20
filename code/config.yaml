@@ -1,0 +1,4 @@
+DATA_PATH: './data'
+DATA_CACHE_PATH: './data/cache'
+JOBS_PATH: './jobs'
+RESULTS_PATH: './results'

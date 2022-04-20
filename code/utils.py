@@ -3,6 +3,7 @@ import random
 from tokenize import String
 from typing import Tuple, Literal
 import pandas as pd
+import yaml
 
 import numpy as np
 import tensorflow as tf
@@ -188,7 +189,8 @@ def prepare_small_datasets():
 
 
 def load_prepared_datasets(
-        variant: Literal['full', 'small', 'mini', 'debug']) -> pd.DataFrame:
+    variant: Literal['full', 'small_balanced', 'small', 'mini', 'debug']
+) -> pd.DataFrame:
 
     with open(f'{DATA_PATH}/train_{variant}.pkl', 'rb') as f:
         train = pickle.load(f)
@@ -198,6 +200,12 @@ def load_prepared_datasets(
         test = pickle.load(f)
 
     return train, valid, test
+
+
+def load_config():
+    with open('config.yaml', 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    return config
 
 
 if __name__ == '__main__':

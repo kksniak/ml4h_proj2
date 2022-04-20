@@ -4,6 +4,12 @@ from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 import seaborn as sn
 import matplotlib.pyplot as plt
 
+from utils import load_config
+
+config = load_config()
+
+RESULTS_PATH = config['RESULTS_PATH']
+
 
 def write_results(model_name: str, metrics: dict, figures: dict) -> None:
     """Writes results to the results directory
@@ -14,8 +20,7 @@ def write_results(model_name: str, metrics: dict, figures: dict) -> None:
         metrics: Dictionary of metrics to be saved
         figures: Dictionary of matplotlib figures to be saved
     """
-
-    directory = f"results/{model_name}"
+    directory = f"{RESULTS_PATH}/{model_name}"
     Path(directory).mkdir(parents=True, exist_ok=True)
     with open(f"{directory}/metrics.txt", "w", encoding="utf-8") as f:
         for key, value in metrics.items():
