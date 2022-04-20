@@ -69,13 +69,18 @@ class BERT():
         checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             os.path.join(CHECKPOINT_PATH, self.id))
 
+        early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss', patience=0, restore_best_weights=True)
+
         bert.model.summary()
-        bert.model.fit(x=self.tf_dataset['train'],
-                       validation_data=self.tf_dataset['valid'],
-                       epochs=self.params['epochs'],
-                       class_weight=self.class_weights if self.params['use_class_weights'] else None,
-                       callbacks=[checkpoint_callback]
-                       if self.params['save_checkpoints'] else [])
+        bert.model.fit(
+            x=self.tf_dataset['train'],
+            validation_data=self.tf_dataset['valid'],
+            epochs=self.params['epochs'],
+            class_weight=self.class_weights
+            if self.params['use_class_weights'] else None,
+            callbacks=[checkpoint_callback, early_stopping_callback]
+            if self.params['save_checkpoints'] else [early_stopping_callback])
 
     def _preprocess(self, df):
         df = df.rename(columns={'target': 'label'})
