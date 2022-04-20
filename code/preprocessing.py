@@ -14,16 +14,28 @@ from utils import load_all_datasets
 
 
 class Preprocessing:
+    """class for data preprocessing"""
 
     def __init__(self,
                  stemming: boolean = False,
                  lemmatisation: boolean = False) -> None:
+        """class initialisation
+
+        Args:
+            stemming (boolean, optional): If true, the stemming is added to preprocessing. Defaults to False.
+            lemmatisation (boolean, optional): If true, the lemmitisation is added to preprocessing. Defaults to False.
+        """
         self.if_stemming = stemming
         self.if_lemmatisation = lemmatisation
         self.train_df, self.val_df, self.test_df = load_all_datasets()
 
     def preprocess_datasets(
             self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """preprocessing workflow
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: dataframes with preprocessed sentences, positional features and class name
+        """
         # print(self.test_df)
 
         self.lowercasing()
@@ -43,6 +55,11 @@ class Preprocessing:
         self
     ) -> Tuple[np.array, np.array, np.array, np.array, np.array, np.array,
                np.array, np.array, np.array]:
+        """Generates data to be fed for training and embedding functions
+
+        Returns:
+            Tuple[np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array]: Returns sentences, encoded class number and positional feature for train, val, test sets
+        """
         name_mapping = {
             'BACKGROUND': 0,
             'OBJECTIVE': 1,
@@ -74,11 +91,13 @@ class Preprocessing:
         return sentences_train, sentences_val, sentences_test, y_train, y_val, y_test, abstractPosFeat_train, abstractPosFeat_val, abstractPosFeat_test
 
     def lowercasing(self) -> None:
+        """lowercases all letters"""
         self.train_df["text"] = self.train_df["text"].str.lower()
         self.val_df["text"] = self.val_df["text"].str.lower()
         self.test_df["text"] = self.test_df["text"].str.lower()
 
     def stop_words_punctuation_removal(self) -> None:
+        """removes stop words and punctuation"""
         english_stop_words = set(nltk.corpus.stopwords.words('english'))
 
         def removal(text):
@@ -96,6 +115,7 @@ class Preprocessing:
             lambda text: removal(text))
 
     def replace_digits(self) -> None:
+        """replaces all numbers with '@' sign"""
 
         def replace(text):
             return re.sub(r'[0-9]+', '@', text)
@@ -108,6 +128,7 @@ class Preprocessing:
             lambda text: replace(text))
 
     def apply_stemming(self) -> None:
+        """applies stemming to words"""
         stemmer = nltk.stem.PorterStemmer()
 
         def ap_stem(text):
@@ -121,6 +142,7 @@ class Preprocessing:
             lambda text: ap_stem(text))
 
     def apply_lemmatisation(self) -> None:
+        """applies lemmatisation to words"""
         lemmatiser = nltk.stem.WordNetLemmatizer()
 
         def ap_lemm(text):
@@ -135,7 +157,7 @@ class Preprocessing:
             lambda text: ap_lemm(text))
 
     def tokenisation(self) -> None:
-
+        """splits sentences into words"""
         def token(text):
             return [word for word in str(text).split()]
 
