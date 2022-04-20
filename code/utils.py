@@ -93,6 +93,16 @@ def fast_feature_selector(n_feats: int, X_train: np.array, y_train: np.array,
 def create_POS_encoding(sentences: list,
                         filename: str,
                         vectorizer: TfidfVectorizer = None) -> TfidfVectorizer:
+    """Creates part-of-speech tags for every word in the input and saves it encoded as TF-IDF features.
+
+    Args:
+        sentences : list of sentences to tag
+        filename :  filename of resulting file
+        vectorizer : TfidfVectorizer - must be already fitted if applied to the val and test set.
+
+    Returns:
+        vectorizer : TF-IDF vectorizer used in the process
+    """
     nlp = spacy.load("en_core_web_sm")
     pos = []
     for sentence in tqdm(sentences):
