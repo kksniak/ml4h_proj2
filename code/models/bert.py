@@ -30,6 +30,7 @@ class BERT():
         self.model_id = params['model_id']
         self.dataset_id = params['dataset_id']
         self.batch_size = params['batch_size']
+        self.learning_rate = params['learning_rate']
         self.freeze_bert = params['freeze_bert']
         self.freeze_bert_encoder = params['freeze_bert_encoder']
         self.load_checkpoint_from = params['load_checkpoint_from']
@@ -46,7 +47,8 @@ class BERT():
             self.model.bert.trainable = False
         if self.freeze_bert_encoder:
             self.model.bert.encoder.trainable = False
-        self.model.compile(optimizer='adam',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(
+            learning_rate=self.learning_rate),
                            loss=SparseCategoricalCrossentropy(from_logits=True),
                            metrics=['accuracy'])
         self.model.summary()
