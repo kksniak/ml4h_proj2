@@ -73,7 +73,7 @@ class BERT():
         bert.model.fit(x=self.tf_dataset['train'],
                        validation_data=self.tf_dataset['valid'],
                        epochs=self.params['epochs'],
-                       class_weight=self.class_weights,
+                       class_weight=self.class_weights if self.params['use_class_weights'] else None,
                        callbacks=[checkpoint_callback]
                        if self.params['save_checkpoints'] else [])
 
