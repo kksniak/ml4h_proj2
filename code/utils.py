@@ -112,8 +112,21 @@ def create_POS_encoding(sentences: list,
     return vectorizer
 
 
+def get_sample(df, n):
+    samples = []
+    for target in df['target'].unique():
+        target_df = df[df['target'] == target]
+        samples.append(target_df.sample(n=n, random_state=SEED))
+    return pd.concat(samples)
+
+
 def prepare_small_datasets():
     train, valid, test = load_all_datasets()
+
+    # Small balanced dataset
+    train_small_balanced = get_sample(train, 20000)
+    valid_small_balanced = get_sample(train, 20000)
+    test_small_balanced = test
 
     # Small dataset
     train_small, _ = train_test_split(train,
