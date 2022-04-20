@@ -36,10 +36,10 @@ X_train, X_val, X_test = embedding_creator.train(load_model=True)
 #### Vanilla
 word2vec_embedding_layers = embedding_creator.get_embedding_layer(
     mean_embedding=True)
-# model = Vanilla_NN("word2vec", word2vec_embedding_layers)
-# model.train(X_train, y_train, X_val, y_val, load_model=True)
-# y_pred = model.predict(X_test)
-# evaluate("vanilla_nn_word2vec", y_pred, y_test, save_results=True)
+model = Vanilla_NN("word2vec", word2vec_embedding_layers)
+model.train(X_train, y_train, X_val, y_val, load_model=True)
+y_pred = model.predict(X_test)
+evaluate("vanilla_nn_word2vec", y_pred, y_test, save_results=True)
 
 ######################## ADD WORD2vec models here
 
@@ -88,10 +88,10 @@ X_train, X_val, X_test = embedding_creator.train(load_model=True)
 #### Vanilla NN
 fasttext_embedding_layers = embedding_creator.get_embedding_layer(
     mean_embedding=True)
-# model = Vanilla_NN("fastText", fasttext_embedding_layers)
-# model.train(X_train, y_train, X_val, y_val, load_model=True)
-# y_pred = model.predict(X_test)
-# evaluate("vanilla_nn_fastText", y_pred, y_test, save_results=True)
+model = Vanilla_NN("fastText", fasttext_embedding_layers)
+model.train(X_train, y_train, X_val, y_val, load_model=True)
+y_pred = model.predict(X_test)
+evaluate("vanilla_nn_fastText", y_pred, y_test, save_results=True)
 
 ######################## ADD fasttext models here
 fasttext_embedding_layers = embedding_creator.get_embedding_layer(
@@ -99,7 +99,7 @@ fasttext_embedding_layers = embedding_creator.get_embedding_layer(
 
 #### BiLSTM 
 model = BiRNN_LSTM("fastText", fasttext_embedding_layers)
-model.train(X_train, y_train, X_val, y_val, load_model=False)
+model.train(X_train, y_train, X_val, y_val, load_model=True)
 y_pred = model.predict(X_test)
 evaluate("BiLSTM_fastText", y_pred, y_test, save_results=True)
 
@@ -114,7 +114,7 @@ evaluate("BiLSTM_POS_fastText", y_pred, y_test, save_results=True)
 #### ResNet1D
 model =ResNet1D_model("fastText",fasttext_embedding_layers,use_len_and_position = True)
 model.train(X_train,y_train, X_val, y_val,abstractPosFeat_train=abstractPosFeat_train,
-            abstractPosFeat_val=abstractPosFeat_val, load_model=False)
+            abstractPosFeat_val=abstractPosFeat_val, load_model=True)
 y_pred = model.predict(X_test,abstractPosFeat_test)
 evaluate("resnet1d_position_fastText", y_pred, y_test, save_results=True)
 
@@ -132,7 +132,7 @@ X_train, X_val, X_test = embedding_creator.train()
 keras_embedding_layers = embedding_creator.get_embedding_layer(
     mean_embedding=True)
 model = Vanilla_NN("kerasEmbed", keras_embedding_layers)
-model.train(X_train, y_train, X_val, y_val, load_model=False)
+model.train(X_train, y_train, X_val, y_val, load_model=True)
 y_pred = model.predict(X_test)
 evaluate("vanilla_nn_kerasEmbed", y_pred, y_test, save_results=True)
 
@@ -142,7 +142,7 @@ keras_embedding_layers = embedding_creator.get_embedding_layer(
     mean_embedding=False)
 #### BiLSTM 
 model = BiRNN_LSTM("kerasEmbed", keras_embedding_layers)
-model.train(X_train, y_train, X_val, y_val, load_model=False)
+model.train(X_train, y_train, X_val, y_val, load_model=True)
 y_pred = model.predict(X_test)
 evaluate("BiLSTM_kerasEmbed", y_pred, y_test, save_results=True)
 
@@ -150,14 +150,14 @@ evaluate("BiLSTM_kerasEmbed", y_pred, y_test, save_results=True)
 
 model = BiRNN_LSTM_POS("kerasEmbed", keras_embedding_layers,use_len_and_position= True)
 model.train(X_train, y_train, X_val, y_val,pos_train=pos, pos_val=pos_val,
-            abstractPosFeat_train=abstractPosFeat_train,abstractPosFeat_val=abstractPosFeat_val, load_model=False)
+            abstractPosFeat_train=abstractPosFeat_train,abstractPosFeat_val=abstractPosFeat_val, load_model=True)
 y_pred = model.predict(X_test, pos_test,abstractPosFeat_test)
 evaluate("BiLSTM_POS_kerasEmbed", y_pred, y_test, save_results=True)
 
 #### ResNet1D
 model =ResNet1D_model("kerasEmbed",keras_embedding_layers,use_len_and_position = True)
 model.train(X_train,y_train, X_val, y_val,abstractPosFeat_train=abstractPosFeat_train,
-            abstractPosFeat_val=abstractPosFeat_val, load_model=False)
+            abstractPosFeat_val=abstractPosFeat_val, load_model=True)
 y_pred = model.predict(X_test,abstractPosFeat_test)
 evaluate("resnet1d_position_kerasEmbed", y_pred, y_test, save_results=True)
 
