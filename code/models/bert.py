@@ -30,6 +30,7 @@ class BERT():
         self.model_id = params['model_id']
         self.dataset_id = params['dataset_id']
         self.batch_size = params['batch_size']
+        self.freeze_bert = params['freeze_bert']
         self.freeze_bert_encoder = params['freeze_bert_encoder']
         self.load_checkpoint_from = params['load_checkpoint_from']
         self.save_checkpoints = params['save_checkpoints']
@@ -41,8 +42,10 @@ class BERT():
         config = AutoConfig.from_pretrained(self.model_id, num_labels=5)
         self.model = TFAutoModelForSequenceClassification.from_pretrained(
             self.model_id, config=config, from_pt=True)
-        self.model.bert.trainable = False
-        self.model.bert.encoder.trainable = not self.freeze_bert_encoder
+        if self.freeze_bert:
+            self.model.bert.trainable = False
+        elif self.freeze_bert_encoder:
+            self.model.bert.encoder.trainable = False
         self.model.compile(optimizer='adam',
                            loss=SparseCategoricalCrossentropy(from_logits=True),
                            metrics=['accuracy'])
