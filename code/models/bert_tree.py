@@ -12,7 +12,7 @@ bert_params = {
     'learning_rate': 0.0003,
     'batch_size': 1,
     'epochs': 4,
-    'dataset': 'debug',
+    'dataset': 'small',
     'freeze_base_layer': True,
     'load_checkpoint': False,
     'save_checkpoints': False,
@@ -44,31 +44,31 @@ class BERTTree:
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer,
                                                 return_tensors='tf')
 
-        train = self.tokenized_dataset['train'].to_tf_dataset(
-            columns=['attention_mask', 'input_ids', 'token_type_ids'],
-            label_cols=['label'],
-            shuffle=False,
-            collate_fn=data_collator,
-            batch_size=32,
-        )
+        #train = self.tokenized_dataset['train'].to_tf_dataset(
+        #    columns=['attention_mask', 'input_ids', 'token_type_ids'],
+        #    label_cols=['label'],
+        #    shuffle=False,
+        #    collate_fn=data_collator,
+        #    batch_size=32,
+        #)
 
-        test = self.tokenized_dataset['test'].to_tf_dataset(
-            columns=['attention_mask', 'input_ids', 'token_type_ids'],
-            label_cols=['label'],
-            shuffle=False,
-            collate_fn=data_collator,
-            batch_size=32,
-        )
+        #test = self.tokenized_dataset['test'].to_tf_dataset(
+        #    columns=['attention_mask', 'input_ids', 'token_type_ids'],
+        #    label_cols=['label'],
+        #    shuffle=False,
+        #    collate_fn=data_collator,
+        #    batch_size=32,
+        #)
 
-        self.tf_dataset = {
-            'train': train,
-            'test': test,
-        }
+        #self.tf_dataset = {
+        #    'train': train,
+        #    'test': test,
+        #}
 
     def compute_features(self, dataset):
+        print('computing features...')
         SHARDS = 10
         Xs = []
-        ys = []
         for i in range(SHARDS):
             dataset_shard = self.tokenized_dataset[dataset].shard(
                 num_shards=SHARDS, index=i)
@@ -146,9 +146,5 @@ if __name__ == '__main__':
     bert_tree.load_data()
     bert_tree.generate_features('train')
     bert_tree.generate_features('test')
-    bert_tree.train()
-    bert_tree.evaluate()
-
-    with open(os.path.join('data', f'X_feat_train_debug_Bio_ClinicalBERT.pkl'),
-              'rb') as f:
-        X_train = pickle.load(f)
+    #bert_tree.train()
+    #bert_tree.evaluate()

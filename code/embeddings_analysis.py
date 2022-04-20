@@ -13,8 +13,8 @@ if __name__ == '__main__':
 
     print("\n -> Similar to 'cardiologist' - 'heart' + 'skin' =")
     print(embedding_creator.model.wv.most_similar(positive=['cardiologist', 'skin'], negative=['heart'], topn=3))
-    print("\n -> Similar to 'dermatologist' - 'skin' + 'ophthalmologist' =")
-    print(embedding_creator.model.wv.most_similar(positive=['dermatologist', 'ophthalmologist'], negative=['skin'], topn=3))
+    print("\n -> Similar to 'skin' - 'dermatologist' + 'ophthalmologist' =")
+    print(embedding_creator.model.wv.most_similar(positive=['skin','ophthalmologist'], negative=['dermatologist'], topn=3))
 
     print("\n\nThe fastText analysis:")
     embedding_creator = Embeddings("fastText", [], [], [])
@@ -26,8 +26,8 @@ if __name__ == '__main__':
 
     print("\n -> Similar to 'cardiologist' - 'heart' + 'skin' =")
     print(embedding_creator.model.wv.most_similar(positive=['cardiologist', 'skin'], negative=['heart'], topn=3))
-    print("\n -> Similar to 'dermatologist' - 'skin' + 'ophthalmologist' =")
-    print(embedding_creator.model.wv.most_similar(positive=['dermatologist', 'ophthalmologist'], negative=['skin'], topn=3))
+    print("\n -> Similar to 'skin' - 'dermatologist' + 'ophthalmologist' =")
+    print(embedding_creator.model.wv.most_similar(positive=['skin','ophthalmologist'], negative=['dermatologist'], topn=3))
 
 
 
