@@ -17,11 +17,25 @@ class BiRNN_LSTM_POS:
     def __init__(self,
                  embedding_type: Literal["word2vec", "fastText", "kerasEmbed"],
                  embedding_layers: List[keras.layers.Layer] = [], use_len_and_position: bool = False):
+        """Bidirectional LSTM model which requires also POS tags.
+
+        Args:
+            embedding_type: Name of the used embedding.
+            embedding_layers: Embedding layer to use.
+            use_len_and_position: If model uses positional features. Defaults to False.
+        """
         self.embedding_type = embedding_type
         self.embedding_layers = embedding_layers
         self.use_len_and_position = use_len_and_position
 
     def init_model(self, input_shape: Tuple, pos_shape: Tuple, len_shape:Tuple = None):
+        """_summary_
+
+        Args:
+            input_shape: Shape of the input as required by keras.
+            pos_shape: Shape of the part of speech tags features.
+            len_shape: Shape of positional features if used. Defaults to None.
+        """
         inputs = keras.Input(shape=input_shape, name="sentences")
         x = inputs
         pos_input = keras.Input(shape = pos_shape, name="pos")
