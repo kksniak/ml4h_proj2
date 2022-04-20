@@ -48,7 +48,10 @@ class BiRNN_LSTM:
         set_seeds()
         self.init_model(input_shape=(X_train.shape[-1],) )
 
-        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+        if self.embedding_type == "kerasEmbed":
+            callback = tf.keras.callbacks.EarlyStopping(patience=3)
+        else:
+            callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
         self.clf.compile("adam",
                          "sparse_categorical_crossentropy",
                          metrics=["accuracy"])
