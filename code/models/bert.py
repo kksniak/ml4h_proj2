@@ -120,17 +120,26 @@ if __name__ == '__main__':
     from utils import set_seeds
 
     parser = argparse.ArgumentParser(description='Point to a job.')
-    parser.add_argument('-j', '--job', action='store')
+    parser.add_argument('-p', '--params', action='store')
+    parser.add_argument('-c', '--checkpoint', action='store')
+    parser.add_argument('-d', '--dataset', action='store')
+    parser.add_argument('--skip-training', action='store_true')
     args = parser.parse_args()
 
     set_seeds()
 
-    job = args.job
-
-    with open(job, 'r') as f:
+    with open(args.params, 'r') as f:
         params = json.load(f)
+
+    if args.checkpoint:
+        params['load_checkpoint_from'] = args.checkpoint
+    if args.dataset:
+        params['dataset_id'] = args.dataset
 
     bert = BERT(params=params)
     bert.load_data()
-    bert.train()
+
+    if not args.skip_training:
+        bert.train()
+
     bert.evaluate()
