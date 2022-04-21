@@ -1,12 +1,14 @@
 import numpy as np
 import os
 import pickle
-from transformers import AutoTokenizer, AutoConfig, TFBertModel, DataCollatorWithPadding
+from transformers import AutoTokenizer, AutoConfig, TFBertModel, DataCollatorWithPadding, Trainer, TrainingArguments
 
-from bert_utils import get_dataset, get_tokenized_dataset, get_tf_dataset
+from bert_utils import get_dataset, get_tokenized_dataset, get_tf_dataset, get_tf_split
 from utils import load_config
 
 from typing import Literal
+
+SHARDS = 100
 
 
 def generate_features(model_id: str,
@@ -23,10 +25,16 @@ def generate_features(model_id: str,
                                               tokenizer,
                                               pad=True,
                                               use_cache=False)
-    tf_dataset = get_tf_dataset(tokenized_dataset, 1, tokenizer)
 
-    print('Generating features...')
-    X = model.predict(tf_dataset[split], verbose=1)[1]
+    Xs = []
+    for i in range(SHARDS):
+        print('Processing shard', i)
+        shard = tokenized_dataset[split].shard(num_shards=SHARDS, index=i)
+        tf_shard = get_tf_split(shard, 1, tokenizer)
+        X = model.predict(tf_shard, verbose=1)[1]
+        Xs.append(X)
+
+    X = np.concatenate(Xs)
     y = np.array(tokenized_dataset[split]['label'])
 
     config = load_config()
