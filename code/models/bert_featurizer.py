@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import pickle
-from pathlib import Path
 from transformers import AutoTokenizer, AutoConfig, TFBertModel, DataCollatorWithPadding, Trainer, TrainingArguments
 
 from bert_utils import get_dataset, get_tokenized_dataset, get_tf_dataset, get_tf_split
@@ -36,26 +35,29 @@ def generate_features(model_id: str,
                                               pad=True,
                                               use_cache=False)
 
-    y = np.array(tokenized_dataset[split]['label'])
-
-    identifier = f'{model_id.split("/")[-1]}_{dataset_id}_{split}'
-    config = load_config()
-    with open(os.path.join(config['DATA_PATH'], f'y_{identifier}.npy'),
-              'wb') as f:
-        np.save(f, y)
-
     # Process data in shards to avoid filling GPU memory
-    Path(os.path.join(config['DATA_PATH'], 'shards')).mkdir(parents=True,
-                                                            exist_ok=True)
+    Xs = []
     for i in range(SHARDS):
         print('Processing shard', i)
         shard = tokenized_dataset[split].shard(num_shards=SHARDS, index=i)
         tf_shard = get_tf_split(shard, 1, tokenizer)
         X = model.predict(tf_shard, verbose=1)[1]
-        with open(
-                os.path.join(config['DATA_PATH'], 'shards',
-                             f'X_feat_{identifier}-{i}.npy'), 'wb') as f:
-            np.save(f, X)
+        Xs.append(X)
+
+    X = np.concatenate(Xs)
+    y = np.array(tokenized_dataset[split]['label'])
+
+    config = load_config()
+
+    identifier = f'{model_id.split("/")[-1]}_{dataset_id}_{split}'
+
+    with open(os.path.join(config['DATA_PATH'], f'X_feat_{identifier}.npy'),
+              'wb') as f:
+        np.save(f, X)
+
+    with open(os.path.join(config['DATA_PATH'], f'y_{identifier}.npy'),
+              'wb') as f:
+        np.save(f, y)
 
 
 if __name__ == '__main__':
