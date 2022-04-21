@@ -138,7 +138,7 @@ def prepare_small_datasets() -> None:
 
     # Small balanced dataset
     train_small_balanced = get_sample(train, 20000)
-    valid_small_balanced = get_sample(train, 20000)
+    valid_small_balanced = get_sample(train, 4000)
     test_small_balanced = test
 
     # Small dataset
