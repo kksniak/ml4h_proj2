@@ -125,11 +125,17 @@ def get_tokenized_dataset(dataset_id: Literal['full', 'small_balanced', 'small',
             pass
 
     print('Tokenizing dataset...')
-    tokenized_dataset = dataset.map(
-        lambda sample: tokenizer(sample['text'],
-                                 truncation=True,
-                                 padding='max_length' if pad else None,
-                                 max_length=512 if pad else None))
+    if pad:
+        tokenized_dataset = dataset.map(
+            lambda sample: tokenizer(sample['text'],
+                                     truncation=True,
+                                     padding='max_length',
+                                     max_length=512))
+    else:
+        tokenized_dataset = dataset.map(lambda sample: tokenizer(
+            sample['text'],
+            truncation=True,
+        ))
 
     tokenized_dataset.save_to_disk(os.path.join(tokenized_dataset_path))
 
