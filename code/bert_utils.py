@@ -107,3 +107,17 @@ def get_tf_dataset(tokenized_dataset, batch_size, tokenizer):
         )
 
     return tf_dataset
+
+
+def get_tf_split(tokenized_dataset, batch_size, tokenizer):
+    print('Creating TF dataset...')
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer,
+                                            return_tensors='tf')
+
+    return tokenized_dataset.to_tf_dataset(
+        columns=['attention_mask', 'input_ids', 'token_type_ids'],
+        label_cols=['label'],
+        shuffle=False,
+        collate_fn=data_collator,
+        batch_size=batch_size,
+    )
