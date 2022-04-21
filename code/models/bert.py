@@ -65,10 +65,14 @@ class BERT():
         # Load weights from checkpoint if specified
         if self.load_checkpoint_from:
             self.model.load_weights(self.load_checkpoint_from)
+            print('Loaded checkpoint')
 
         # Save the parameters
         with open(os.path.join(RESULTS_PATH, self.id, 'params.txt'), 'w') as f:
             params = json.dump(self.params, f, indent=4)
+
+        # Create directory for checkpoints
+        os.mkdir(os.path.join(RESULTS_PATH, self.id, 'checkpoint'))
 
     def load_data(self):
         self.dataset = get_dataset(self.dataset_id)
@@ -80,7 +84,11 @@ class BERT():
 
     def train(self):
         checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-            os.path.join(RESULTS_PATH, self.id, 'checkpoint'))
+            os.path.join(RESULTS_PATH, self.id, 'checkpoint', 'checkpoint'),
+            save_best_only=True,
+            save_weights_only=True,
+            monitor='val_loss',
+            verbose=1)
         early_stopping_callback = tf.keras.callbacks.EarlyStopping(
             monitor='val_loss', patience=0, restore_best_weights=True)
 
