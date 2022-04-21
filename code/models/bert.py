@@ -75,6 +75,8 @@ class BERT():
         os.mkdir(os.path.join(RESULTS_PATH, self.id, 'checkpoint'))
 
     def load_data(self):
+        """Loads data from file and prepares it for training"""
+
         self.dataset = get_dataset(self.dataset_id)
         self.tokenized_dataset = get_tokenized_dataset(self.dataset_id,
                                                        self.dataset,
@@ -83,6 +85,8 @@ class BERT():
                                          self.batch_size, self.tokenizer)
 
     def train(self):
+        """Trains the model"""
+
         checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             os.path.join(RESULTS_PATH, self.id, 'checkpoint', 'checkpoint'),
             save_best_only=True,
@@ -99,7 +103,9 @@ class BERT():
                        if self.save_checkpoints else [early_stopping_callback])
 
     def evaluate(self):
-        preds = self.model.predict(self.tf_dataset['test'])[0]
+        """Evaluates the model and optionally saves the results"""
+
+        preds = self.model.predict(self.tf_dataset['test'], verbose=1)[0]
         y_true = np.array(self.dataset['test']['label'])
         evaluate(self.id, preds, y_true, save_results=self.save_results)
 

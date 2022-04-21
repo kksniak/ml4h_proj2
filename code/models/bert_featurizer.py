@@ -15,6 +15,15 @@ def generate_features(model_id: str,
                       dataset_id: Literal['full', 'small_balanced', 'small',
                                           'mini', 'debug'],
                       split: Literal['train', 'valid', 'test']):
+    """Generates features using a specified BERT model.
+
+    Saves the output of the pooled output layer of the BERT model.
+
+    Args:
+        model_id: huggingface id of model.
+        dataset_id: dataset to featurize.
+        split: the split of the dataset to featurize.
+    """
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     config = AutoConfig.from_pretrained(model_id)
     model = TFBertModel.from_pretrained(model_id, config=config, from_pt=True)
@@ -26,6 +35,7 @@ def generate_features(model_id: str,
                                               pad=True,
                                               use_cache=False)
 
+    # Process data in shards to avoid filling GPU memory
     Xs = []
     for i in range(SHARDS):
         print('Processing shard', i)

@@ -1,7 +1,7 @@
 import os
 import random
 from tokenize import String
-from typing import Tuple, Literal
+from typing import Tuple, Literal, Dict, Any
 import pandas as pd
 import yaml
 
@@ -131,7 +131,9 @@ def get_sample(df, n):
     return pd.concat(samples)
 
 
-def prepare_small_datasets():
+def prepare_small_datasets() -> None:
+    """Creates smaller data splits from the full dataset and saves them."""
+
     train, valid, test = load_all_datasets()
 
     # Small balanced dataset
@@ -200,7 +202,15 @@ def prepare_small_datasets():
 
 def load_prepared_datasets(
     variant: Literal['full', 'small_balanced', 'small', 'mini', 'debug']
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Loads a prepared dataset.
+
+    Args:
+        variant: id of dataset to load.
+
+    Returns:
+        The loaded dataset in a train, validation and test split.
+    """
 
     with open(f'{DATA_PATH}/train_{variant}.pkl', 'rb') as f:
         train = pickle.load(f)
@@ -212,7 +222,13 @@ def load_prepared_datasets(
     return train, valid, test
 
 
-def load_config():
+def load_config() -> Dict[str, Any]:
+    """Loads the config file.
+
+    Returns:
+        The parsed config.
+    """
+
     with open('config.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     return config

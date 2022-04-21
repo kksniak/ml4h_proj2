@@ -10,11 +10,28 @@ from typing import Literal
 from utils import load_prepared_datasets, load_config
 
 
-def load_cached_dataset(cache_path):
+def load_cached_dataset(cache_path: str) -> DatasetDict:
+    """Loads a cached dataset from disk.
+
+    Args:
+        cache_path: path to the cached dataset.
+
+    Returns:
+        The loaded DatasetDict.
+    """
     return DatasetDict.load_from_disk(cache_path)
 
 
 def create_dataset(df: pd.DataFrame) -> Dataset:
+    """Creates a huggingface Dataset from a pandas DataFrame.
+
+    Args:
+        df: dataframe containing text and labels.
+
+    Returns:
+        A huggingface dataset with integer labels.
+    """
+
     df = df.rename(columns={'target': 'label'})
 
     label_map = {
@@ -35,6 +52,18 @@ def create_dataset(df: pd.DataFrame) -> Dataset:
 def get_dataset(dataset_id: Literal['full', 'small_balanced', 'small', 'mini',
                                     'debug'],
                 use_cache=True):
+    """Loads a dataset from cache if exists and creates it otherwise.
+
+    Caches the dataset if newly created.
+
+    Args:
+        dataset_id: dataset version to load.
+        use_cache: Whether cache should be checked or not. Defaults to True.
+
+    Returns:
+        The loaded dataset.
+    """
+
     # Load data from cache if exists
     config = load_config()
     cache_path = os.path.join(config['DATA_CACHE_PATH'], dataset_id)
@@ -48,6 +77,7 @@ def get_dataset(dataset_id: Literal['full', 'small_balanced', 'small', 'mini',
         except FileNotFoundError:
             pass
 
+    # Create dataset if no cache was found
     print('Creating dataset...')
     train, valid, test = load_prepared_datasets(variant=dataset_id)
 
@@ -67,6 +97,21 @@ def get_tokenized_dataset(dataset_id: Literal['full', 'small_balanced', 'small',
                           tokenizer,
                           pad=False,
                           use_cache=True):
+    """Creates a tokenized dataset from a dataset.
+
+    Loads dataset from cache if exists, creates it otherwise.
+
+    Args:
+        dataset_id: dataset version to load/create.
+        dataset: the dataset to tokenize.
+        tokenizer: the tokenizer to use.
+        pad: whether to pad the data or not. Defaults to False.
+        use_cache: whether to load from cache. Defaults to True.
+
+    Returns:
+        The tokenized dataset.
+    """
+
     config = load_config()
     cache_path = os.path.join(config['DATA_CACHE_PATH'], dataset_id)
     tokenized_dataset_path = os.path.join(cache_path, 'tokenized_dataset')
@@ -92,6 +137,17 @@ def get_tokenized_dataset(dataset_id: Literal['full', 'small_balanced', 'small',
 
 
 def get_tf_dataset(tokenized_dataset, batch_size, tokenizer):
+    """Creates a TensorFlow dataset from a tokenized dataset.
+
+    Args:
+        tokenized_dataset: the tokenized dataset.
+        batch_size: batch size for the TF dataset.
+        tokenizer: tokenizer to use for data collator.
+
+    Returns:
+        A TensorFlow dataset.
+    """
+
     print('Creating TF dataset...')
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer,
                                             return_tensors='tf')
@@ -110,6 +166,17 @@ def get_tf_dataset(tokenized_dataset, batch_size, tokenizer):
 
 
 def get_tf_split(tokenized_dataset, batch_size, tokenizer):
+    """Creates a TensorFlow dataset from a single split of a tokenized dataset.
+
+    Args:
+        tokenized_dataset: the tokenized dataset.
+        batch_size: batch size for the TF dataset.
+        tokenizer: tokenizer to use for data collator.
+
+    Returns:
+        A TensorFlow dataset.
+    """
+
     print('Creating TF dataset...')
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer,
                                             return_tensors='tf')
