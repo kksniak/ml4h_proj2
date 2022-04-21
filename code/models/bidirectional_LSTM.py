@@ -17,10 +17,21 @@ class BiRNN_LSTM:
     def __init__(self,
                  embedding_type: Literal["word2vec", "fastText", "kerasEmbed"],
                  embedding_layers: List[keras.layers.Layer] = []):
+        """Bidirectional LSTM model.
+
+        Args:
+            embedding_type: Name of the used embedding.
+            embedding_layers: Embedding layer to use.
+        """
         self.embedding_type = embedding_type
         self.embedding_layers = embedding_layers
 
     def init_model(self, input_shape: Tuple):
+        """Definies model.
+
+        Args:
+            input_shape: Shape of the input as required by keras.
+        """
         inputs = keras.Input(shape=input_shape)
         x = inputs
 
