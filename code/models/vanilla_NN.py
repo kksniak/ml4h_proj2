@@ -13,15 +13,27 @@ from utils import set_seeds
 
 
 class Vanilla_NN:
+    """MultiLayer Perceptron class"""
 
     def __init__(self,
                  embedding_type: Literal["TF-IDF", "word2vec", "fastText",
                                          "kerasEmbed"],
                  embedding_layers: List[keras.layers.Layer] = []):
+        """init MLP
+
+        Args:
+            embedding_type (): embedding type used alongside the model
+            embedding_layers (List[keras.layers.Layer], optional): Layers to be added in front of the model responsible for the embedding. Defaults to [].
+        """
         self.embedding_type = embedding_type
         self.embedding_layers = embedding_layers
 
     def init_model(self, input_shape: Tuple):
+        """ MLP model definition
+
+        Args:
+            input_shape (Tuple): input shape dimensions
+        """
         inputs = keras.Input(shape=input_shape)
         x = inputs
 
@@ -40,6 +52,16 @@ class Vanilla_NN:
 
     def train(self, X_train: np.array, y_train: np.array, X_val: np.array,
               y_val: np.array, load_model: boolean, save_name: str = ''):
+        """ fit model
+
+        Args:
+            X_train (np.array): training data
+            y_train (np.array): training labels
+            X_val (np.array): validation data
+            y_val (np.array): validation labels
+            load_model (boolean): if True, model will be loaded from checkpoints
+            save_name (str, optional): Additional comments for checpoint file. Defaults to ''.
+        """
 
         if load_model:
             print("Loading model...")
