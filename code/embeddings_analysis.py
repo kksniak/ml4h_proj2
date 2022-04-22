@@ -1,6 +1,7 @@
 from embeddings import Embeddings
 
 if __name__ == '__main__':
+    """Finds the similarities/semantic equations for word2vec and fasttext"""
 
     similar_words = ['doctor', 'pain', 'medicine']
 
