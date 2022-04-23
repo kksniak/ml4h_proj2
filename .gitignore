@@ -10,3 +10,4 @@ checkpoints/
 .env
 jobs/
 cache/
+.DS_Store
