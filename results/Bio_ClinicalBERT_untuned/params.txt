@@ -1,0 +1,12 @@
+{
+    "model_id": "emilyalsentzer/Bio_ClinicalBERT",
+    "dataset_id": "small_balanced",
+    "learning_rate": 0.0001,
+    "batch_size": 8,
+    "epochs": 10,
+    "freeze_bert": true,
+    "freeze_bert_encoder": true,
+    "load_checkpoint_from": false,
+    "save_checkpoints": true,
+    "save_results": true
+}
