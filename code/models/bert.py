@@ -12,7 +12,7 @@ import os
 import json
 from pathlib import Path
 
-from utils import load_prepared_datasets, load_config
+from utils import load_prepared_datasets
 from evaluation import evaluate
 from bert_utils import get_dataset, get_tokenized_dataset, get_tf_dataset
 

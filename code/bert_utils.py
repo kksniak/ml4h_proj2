@@ -7,7 +7,8 @@ from transformers import DataCollatorWithPadding
 
 from typing import Literal
 
-from utils import load_prepared_datasets, load_config
+from utils import load_prepared_datasets
+from config import DATA_CACHE_PATH
 
 
 def load_cached_dataset(cache_path: str) -> DatasetDict:
@@ -65,8 +66,7 @@ def get_dataset(dataset_id: Literal['full', 'small_balanced', 'small', 'mini',
     """
 
     # Load data from cache if exists
-    config = load_config()
-    cache_path = os.path.join(config['DATA_CACHE_PATH'], dataset_id)
+    cache_path = os.path.join(DATA_CACHE_PATH, dataset_id)
     dataset_path = os.path.join(cache_path, 'dataset')
 
     if use_cache:
@@ -112,8 +112,7 @@ def get_tokenized_dataset(dataset_id: Literal['full', 'small_balanced', 'small',
         The tokenized dataset.
     """
 
-    config = load_config()
-    cache_path = os.path.join(config['DATA_CACHE_PATH'], dataset_id)
+    cache_path = os.path.join(DATA_CACHE_PATH, dataset_id)
     tokenized_dataset_path = os.path.join(cache_path, 'tokenized_dataset')
 
     if use_cache:

@@ -4,11 +4,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 import seaborn as sn
 import matplotlib.pyplot as plt
 
-from utils import load_config
-
-config = load_config()
-
-RESULTS_PATH = config['RESULTS_PATH']
+from config import RESULTS_PATH
 
 
 def write_results(model_name: str, metrics: dict, figures: dict) -> None:
