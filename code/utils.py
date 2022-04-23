@@ -153,15 +153,12 @@ def prepare_small_datasets() -> None:
     test_small = test
 
     # Mini dataset
-    train_mini, _ = train_test_split(train,
-                                     train_size=10000,
-                                     random_state=SEED,
-                                     stratify=train['target'])
-    valid_mini, _ = train_test_split(valid,
-                                     train_size=2000,
-                                     random_state=SEED,
-                                     stratify=valid['target'])
-    test_mini = test
+    train_mini = get_sample(train, 2000)
+    valid_mini = get_sample(valid, 200)
+    test_mini, _ = train_test_split(test,
+                                    train_size=1000,
+                                    random_state=SEED,
+                                    stratify=test['target'])
 
     # Debug dataset
     train_debug, _ = train_test_split(train,
