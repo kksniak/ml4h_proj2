@@ -21,6 +21,7 @@ DATA_PATH = 'data'
 
 
 def load_all_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load train, val and test dataset files"""
 
     # training
     train_df = load_dataset("data/train.txt")
@@ -35,6 +36,14 @@ def load_all_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
 
 def load_dataset(filename: String) -> pd.DataFrame:
+    """Reads single dataset file and generates abstract positional features
+
+    Args:
+        filename (String): name of the file to be read
+
+    Returns:
+        pd.DataFrame: dataframe with unprocessesed sentences, targets and positional features
+    """
     with open(filename, "r") as f:
         lines = f.readlines()
 
@@ -72,6 +81,7 @@ def load_dataset(filename: String) -> pd.DataFrame:
 
 
 def set_seeds() -> None:
+    """Set all needed seeds"""
     os.environ["PYTHONHASHSEED"] = str(SEED)
     tf.random.set_seed(SEED)
     tf.keras.initializers.glorot_normal(SEED)
@@ -81,6 +91,17 @@ def set_seeds() -> None:
 
 def fast_feature_selector(n_feats: int, X_train: np.array, y_train: np.array,
                           X_test: np.array) -> Tuple[np.array, np.array]:
+    """Feature selection method
+
+    Args:
+        n_feats (int): traget number of features
+        X_train (np.array): training set
+        y_train (np.array): training labels
+        X_test (np.array): test set
+
+    Returns:
+        Tuple[np.array, np.array]: new train and test sets after feature selection
+    """
     selector_1 = VarianceThreshold()
     X_train = selector_1.fit_transform(X_train, y_train)
     X_test = selector_1.transform(X_test)
