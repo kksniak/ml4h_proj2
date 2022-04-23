@@ -5,6 +5,7 @@ from models.vanilla_NN import Vanilla_NN
 from models.bidirectional_LSTM_POS import BiRNN_LSTM_POS
 from models.bidirectional_LSTM import BiRNN_LSTM
 from models.resnet1d import ResNet1D_model
+from utils import get_POS_encoding
 
 import pathlib
 import numpy as np
@@ -54,18 +55,8 @@ model.train(X_train, y_train, X_val, y_val, load_model=True)
 y_pred = model.predict(X_test)
 evaluate("BiLSTM_word2vec", y_pred, y_test, save_results=True)
 
-#### BiLSTM with POS and position
 
-######## to be fixed
-main_dir = pathlib.Path(__file__).parents[1]
-pos_file_train = "pos_train"
-pos_file_val = "pos_val"
-pos_file_test = "pos_test"
-
-pos = np.load(main_dir.joinpath(f"data/{pos_file_train}.npy"))
-pos_val = np.load(main_dir.joinpath(f"data/{pos_file_val}.npy"))
-pos_test = np.load(main_dir.joinpath(f"data/{pos_file_test}.npy"))
-##########
+pos, pos_val, pos_test = get_POS_encoding(sentences_train,sentences_val,sentences_test,True)
 
 
 model = BiRNN_LSTM_POS("word2vec", word2vec_embedding_layers,use_len_and_position= True)

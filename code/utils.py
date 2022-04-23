@@ -137,9 +137,42 @@ def create_POS_encoding(sentences: list,
         X_tf = vectorizer.transform(pos).toarray()
 
     np.save(
-        pathlib.Path(__file__).parents[1].joinpath(f"data/{filename}.npy"),
+        pathlib.Path(__file__).parents[1].joinpath(f"code/embeddings_checkpoints/{filename}.npy"),
         X_tf)
     return vectorizer
+
+def get_POS_encoding(sentences_train,sentences_val, sentences_test,load_existing:bool = False) -> Tuple[np.array, np.array, np.array]:
+    """Loades and returns POS encoding features. If load_existing is False, then creates it first.
+
+    Args:
+        sentences_train: Text from training set
+        sentences_val: Text from validation set
+        sentences_test: Text from test set
+        load_existing: If True, loades the saved encoding instead creating it first. Defaults to False.
+
+    Returns:
+        POS features splited for train, val and test set
+    """
+    pos_file_train = "pos_train"
+    pos_file_val = "pos_val"
+    pos_file_test = "pos_test"
+    
+    if load_existing == False:
+
+        # Creating pos TF-IDF representation
+        pos_vectorizer = create_POS_encoding(sentences_train,pos_file_train)
+        _ = create_POS_encoding(sentences_val,pos_file_val,pos_vectorizer)
+        _ = create_POS_encoding(sentences_test,pos_file_test, pos_vectorizer)
+    
+    main_dir = pathlib.Path(__file__).parents[1]
+    pos_train = np.load(main_dir.joinpath(f"code/embeddings_checkpoints/{pos_file_train}.npy"))
+    pos_val = np.load(main_dir.joinpath(f"code/embeddings_checkpoints/{pos_file_val}.npy"))
+    pos_test = np.load(main_dir.joinpath(f"code/embeddings_checkpoints/{pos_file_test}.npy"))
+
+    return pos_train, pos_val, pos_test
+
+
+
 
 
 def get_sample(df, n):
