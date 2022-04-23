@@ -16,10 +16,7 @@ from utils import load_prepared_datasets, load_config
 from evaluation import evaluate
 from bert_utils import get_dataset, get_tokenized_dataset, get_tf_dataset
 
-config = load_config()
-
-RESULTS_PATH = config['RESULTS_PATH']
-JOBS_PATH = config['JOBS_PATH']
+from config import RESULTS_PATH, JOBS_PATH
 
 
 class BERT():

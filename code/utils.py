@@ -3,8 +3,6 @@ import random
 from tokenize import String
 from typing import Tuple, Literal, Dict, Any
 import pandas as pd
-import yaml
-
 import numpy as np
 import tensorflow as tf
 import spacy
@@ -13,24 +11,24 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_classif
 from sklearn.model_selection import train_test_split
 import pickle
-
 import pathlib
 
+from config import DATA_PATH
+
 SEED = 2137
-DATA_PATH = 'data'
 
 
 def load_all_datasets() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load train, val and test dataset files"""
 
     # training
-    train_df = load_dataset("data/train.txt")
+    train_df = load_dataset(f"{DATA_PATH}/train.txt")
 
     # validation
-    val_df = load_dataset("data/dev.txt")
+    val_df = load_dataset(f"{DATA_PATH}/dev.txt")
 
     # test
-    test_df = load_dataset("data/test.txt")
+    test_df = load_dataset(f"{DATA_PATH}/test.txt")
 
     return train_df, val_df, test_df
 
@@ -238,18 +236,6 @@ def load_prepared_datasets(
         test = pickle.load(f)
 
     return train, valid, test
-
-
-def load_config() -> Dict[str, Any]:
-    """Loads the config file.
-
-    Returns:
-        The parsed config.
-    """
-
-    with open('config.yaml', 'r') as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-    return config
 
 
 if __name__ == '__main__':
