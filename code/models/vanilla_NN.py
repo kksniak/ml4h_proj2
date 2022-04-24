@@ -5,9 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import Dense, Dropout, Flatten
 
-import sys
-
-sys.path.append("../")
+from config import MODEL_CHECKPOINTS_PATH
 
 from utils import set_seeds
 
@@ -66,7 +64,7 @@ class Vanilla_NN:
         if load_model:
             print("Loading model...")
             self.clf = keras.models.load_model(
-                "code/models/models_checkpoints/vanila_NN_" + save_name +
+                f"{MODEL_CHECKPOINTS_PATH}/vanila_NN_" + save_name +
                 self.embedding_type)
             return
 
@@ -86,7 +84,7 @@ class Vanilla_NN:
                      callbacks=[callback])
 
         print("Saving model...")
-        self.clf.save("code/models/models_checkpoints/vanila_NN_" + save_name +
+        self.clf.save(f"{MODEL_CHECKPOINTS_PATH}/vanila_NN_" + save_name +
                       self.embedding_type)
 
     def predict(self, X_test):

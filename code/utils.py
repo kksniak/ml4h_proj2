@@ -137,8 +137,7 @@ def create_POS_encoding(sentences: list,
         X_tf = vectorizer.transform(pos).toarray()
 
     np.save(
-        pathlib.Path(__file__).parents[1].joinpath(f"{EMBEDDING_CHECKPOINTS_PATH}/{filename}.npy"),
-        X_tf)
+        f"{EMBEDDING_CHECKPOINTS_PATH}/{filename}.npy",X_tf)
     return vectorizer
 
 def get_POS_encoding(sentences_train,sentences_val, sentences_test,load_existing:bool = False) -> Tuple[np.array, np.array, np.array]:
@@ -164,10 +163,9 @@ def get_POS_encoding(sentences_train,sentences_val, sentences_test,load_existing
         _ = create_POS_encoding(sentences_val,pos_file_val,pos_vectorizer)
         _ = create_POS_encoding(sentences_test,pos_file_test, pos_vectorizer)
     
-    main_dir = pathlib.Path(__file__).parents[1]
-    pos_train = np.load(main_dir.joinpath(f"{EMBEDDING_CHECKPOINTS_PATH}/{pos_file_train}.npy"))
-    pos_val = np.load(main_dir.joinpath(f"{EMBEDDING_CHECKPOINTS_PATH}/{pos_file_val}.npy"))
-    pos_test = np.load(main_dir.joinpath(f"{EMBEDDING_CHECKPOINTS_PATH}/{pos_file_test}.npy"))
+    pos_train = np.load(f"{EMBEDDING_CHECKPOINTS_PATH}/{pos_file_train}.npy")
+    pos_val = np.load(f"{EMBEDDING_CHECKPOINTS_PATH}/{pos_file_val}.npy")
+    pos_test = np.load(f"{EMBEDDING_CHECKPOINTS_PATH}/{pos_file_test}.npy")
 
     return pos_train, pos_val, pos_test
 

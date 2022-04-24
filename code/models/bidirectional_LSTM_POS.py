@@ -3,7 +3,7 @@ from xmlrpc.client import boolean
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-from code.config import MODEL_CHECKPOINTS_PATH
+from config import MODEL_CHECKPOINTS_PATH
 from tensorflow.keras.layers import Dense, Bidirectional, LSTM
 
 

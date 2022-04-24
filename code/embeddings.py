@@ -11,6 +11,7 @@ import keras
 import numpy as np
 
 from utils import set_seeds
+from config import EMBEDDING_CHECKPOINTS_PATH
 
 SEED = 2137
 
@@ -104,7 +105,7 @@ class Embeddings:
         if self.load_model:
             print('Loading word2vec Embedding...')
             self.model = Word2Vec.load(
-                'code/embeddings_checkpoints/word2vec.model')
+                f'{EMBEDDING_CHECKPOINTS_PATH}/word2vec.model')
         else:
             print('Training word2vec Embedding...')
             self.model = Word2Vec(min_count=1,
@@ -114,7 +115,7 @@ class Embeddings:
             self.model.train(self.X_train,
                              total_examples=len(self.X_train),
                              epochs=20)
-            self.model.save('code/embeddings_checkpoints/word2vec.model')
+            self.model.save(f'{EMBEDDING_CHECKPOINTS_PATH}/word2vec.model')
 
     def train_fastText(self) -> None:
         """trains or loads fasttext"""
@@ -122,7 +123,7 @@ class Embeddings:
         if self.load_model:
             print('Loading fastText Embedding...')
             self.model = FastText.load(
-                'code/embeddings_checkpoints/fasttext.model')
+                f'{EMBEDDING_CHECKPOINTS_PATH}/fasttext.model')
         else:
             print('Training fastText Embedding...')
             self.model = FastText(vector_size=self.embed_dim, seed=SEED)
@@ -130,7 +131,7 @@ class Embeddings:
             self.model.train(self.X_train,
                              total_examples=len(self.X_train),
                              epochs=20)
-            self.model.save('code/embeddings_checkpoints/fasttext.model')
+            self.model.save(f'{EMBEDDING_CHECKPOINTS_PATH}/fasttext.model')
 
     def keras_embedding_layer(self) -> None:
         """prepares data for keras embedding layer"""
