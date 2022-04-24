@@ -5,9 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import Dense, Bidirectional, LSTM
 
-import sys
-
-sys.path.append("../")
+from config import MODEL_CHECKPOINTS_PATH
 
 from utils import set_seeds
 
@@ -52,7 +50,7 @@ class BiRNN_LSTM:
         if load_model:
             print("Loading model...")
             self.clf = keras.models.load_model(
-                "code/models/models_checkpoints/biRNN_" + self.embedding_type)
+                f"{MODEL_CHECKPOINTS_PATH}/biRNN_" + self.embedding_type)
             return
 
         print("Fitting model...")
@@ -74,7 +72,7 @@ class BiRNN_LSTM:
                      callbacks=[callback])
 
         print("Saving model...")
-        self.clf.save("code/models/models_checkpoints/biRNN_" +
+        self.clf.save(f"{MODEL_CHECKPOINTS_PATH}/biRNN_" +
                       self.embedding_type)
 
     def predict(self, X_test):

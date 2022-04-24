@@ -3,11 +3,9 @@ from xmlrpc.client import boolean
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from code.config import MODEL_CHECKPOINTS_PATH
 from tensorflow.keras.layers import Dense, Bidirectional, LSTM
 
-import sys
-
-sys.path.append("../")
 
 from utils import set_seeds
 
@@ -71,11 +69,11 @@ class BiRNN_LSTM_POS:
 
         if self.use_len_and_position:
             len_shape = (abstractPosFeat_train.shape[-1],)
-            filename = "code/models/models_checkpoints/biRNN_POS_abstractPos_"
+            filename = f"{MODEL_CHECKPOINTS_PATH}/biRNN_POS_abstractPos_"
             
         else:
             len_shape = None
-            filename = "code/models/models_checkpoints/biRNN_POS_"
+            filename = f"{MODEL_CHECKPOINTS_PATH}/biRNN_POS_"
 
         if load_model:
             print("Loading model...")

@@ -7,7 +7,6 @@ from models.bidirectional_LSTM import BiRNN_LSTM
 from models.resnet1d import ResNet1D_model
 from utils import get_POS_encoding
 
-import pathlib
 import numpy as np
 
 SEED = 2137

@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten,MaxPool
 
 import sys
 
-sys.path.append("../")
+from config import MODEL_CHECKPOINTS_PATH
 
 from utils import set_seeds
 
@@ -83,11 +83,11 @@ class ResNet1D_model:
 
         if self.use_len_and_position:
             len_shape = (abstractPosFeat_train.shape[-1],)
-            filename = "code/models/models_checkpoints/ResNet_1D_abstractPos_"
+            filename = f"{MODEL_CHECKPOINTS_PATH}/ResNet_1D_abstractPos_"
             
         else:
             len_shape = None
-            filename = "code/models/models_checkpoints/ResNet_1D_"
+            filename = f"{MODEL_CHECKPOINTS_PATH}/ResNet_1D_"
 
         if load_model:
             print("Loading model...")
