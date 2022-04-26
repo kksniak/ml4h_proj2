@@ -1,0 +1,15 @@
+name: ml4h
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - spacy
+  - jinja2
+  - gensim
+  - nltk
+  - pandas
+  - tensorflow=2.7
+  - scikit-learn
+  - lightgbm
+  - pytorch
+prefix: /home/fekstroem/miniconda3/envs/ml4h
