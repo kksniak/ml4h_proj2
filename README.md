@@ -1,5 +1,7 @@
 # Sentence Classification in Medical Abstracts - Machine Learning for Health Care Project 2
 
+Related project: [Cardiac Abnormality Classification](https://github.com/kksniak/ml4h_project_1.git)
+
 ## Table of Contents
 
 - [Usage](#usage)
