@@ -1,6 +1,6 @@
 # Sentence Classification in Medical Abstracts - Machine Learning for Health Care Project 2
 
-Related project: [Cardiac Abnormality Classification](https://github.com/kksniak/ml4h_project_1.git)
+Machine Learning for Health Care Project 1: [Cardiac Abnormality Classification](https://github.com/kksniak/ml4h_project_1.git)
 
 ## Table of Contents
 
